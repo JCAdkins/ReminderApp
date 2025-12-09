@@ -1,4 +1,5 @@
 # Miscellaneous
+/backend/.env*
 .env*
 *.class
 *.lock
@@ -8,7 +9,8 @@
 .buildlog/
 .history
 
-
+#Virtual Environment
+/backend/venv
 
 # Flutter repo-specific
 /bin/cache/

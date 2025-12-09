@@ -1,0 +1,54 @@
+{
+  "name": "Upload to Drive",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "upload-to-drive",
+      "httpMethod": "POST",
+      "path": "upload-to-drive",
+      "authentication": "jwt",
+      "credentials": {
+        "jwtAuth": {
+          "name": "JWT Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const creds = $json[\"oauth\"]?.google;\nconst fileUrl = $json[\"fileUrl\"];\nif (!creds || !fileUrl) {\n  throw new Error('Missing Google credentials or file URL');\n}\nreturn [{ json: { creds, fileUrl } }];"
+      },
+      "name": "Parse Payload",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "binaryData": "={{ $json[\"fileUrl\"] }}",
+        "folderId": "YOUR_DRIVE_FOLDER_ID"
+      },
+      "name": "Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "name": "Google Drive OAuth"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Parse Payload", "type": "main", "index": 0 }]]
+    },
+    "Parse Payload": {
+      "main": [[{ "node": "Google Drive", "type": "main", "index": 0 }]]
+    }
+  }
+}
