@@ -2,54 +2,81 @@
   "name": "Google Sync",
   "nodes": [
     {
-      "parameters": {},
+      "id": "1",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "google-sync"
+      },
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [250, 300],
+      "position": [260, 300],
       "webhookId": "google-sync",
-      "httpMethod": "POST",
-      "path": "google-sync",
       "authentication": "jwt",
       "credentials": {
         "jwtAuth": {
-          "name": "JWT Auth"
+          "name": "JWT Auth account"
         }
       }
     },
     {
+      "id": "2",
       "parameters": {
-        "functionCode": "const creds = $json[\"oauth\"]?.google;\nif (!creds) {\n  throw new Error('Missing Google credentials');\n}\nreturn [{ json: { creds } }];"
+        "functionCode": "const google = $json?.oauth?.google;\n\nif (!google) {\n  throw new Error('Missing Google OAuth credentials in request body');\n}\n\nreturn [\n  {\n    json: {\n      access_token: google.access_token,\n      refresh_token: google.refresh_token,\n      expiry_date: google.expiry_date,\n      token_type: google.token_type,\n      userData: $json?.data || {}\n    }\n  }\n];"
       },
       "name": "Parse OAuth",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
-      "position": [450, 300]
+      "position": [500, 300]
     },
     {
+      "id": "3",
       "parameters": {
         "operation": "append",
         "sheetId": "YOUR_SPREADSHEET_ID",
         "range": "Sheet1!A1",
-        "values": "={{ $json[\"creds\"]?.userData }}"
+        "options": {},
+        "values": "={{ Object.values($json.userData) }}"
       },
       "name": "Google Sheets",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 1,
-      "position": [650, 300],
+      "position": [760, 300],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "name": "Google Sheets OAuth"
+          "name": "Google account"
         }
       }
     }
   ],
   "connections": {
     "Webhook": {
-      "main": [[{ "node": "Parse OAuth", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Parse OAuth",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Parse OAuth": {
-      "main": [[{ "node": "Google Sheets", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
-  }
+  },
+  "active": false,
+  "settings": {},
+  "id": "google_sync_workflow",
+  "version": 2,
+  "meta": {},
+  "pinData": {}
 }
