@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.routers import auth, health, oauth, oauth_google
 from app.db import Base, engine
+from fastapi.middleware.cors import CORSMiddleware
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -8,6 +9,14 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="Reminder App",
     version="0.1.1",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(health.router)

@@ -35,6 +35,7 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
 
 @router.post("/login")
 def login(data: LoginRequest, db: Session = Depends(get_db)):
+    print("data: ", data)
     user = authenticate_user(db, data.email, data.password)
     if not user:
         raise HTTPException(400, "Invalid credentials")
