@@ -2,17 +2,16 @@
   "name": "Google Sync",
   "nodes": [
     {
-      "id": "1",
       "parameters": {
         "httpMethod": "POST",
-        "path": "google-sync"
+        "path": "google-sync",
+        "authentication": "jwt"
       },
+      "id": "Webhook1",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [260, 300],
-      "webhookId": "google-sync",
-      "authentication": "jwt",
       "credentials": {
         "jwtAuth": {
           "name": "JWT Auth account"
@@ -20,17 +19,16 @@
       }
     },
     {
-      "id": "2",
       "parameters": {
         "functionCode": "const google = $json?.oauth?.google;\n\nif (!google) {\n  throw new Error('Missing Google OAuth credentials in request body');\n}\n\nreturn [\n  {\n    json: {\n      access_token: google.access_token,\n      refresh_token: google.refresh_token,\n      expiry_date: google.expiry_date,\n      token_type: google.token_type,\n      userData: $json?.data || {}\n    }\n  }\n];"
       },
+      "id": "Function1",
       "name": "Parse OAuth",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [500, 300]
     },
     {
-      "id": "3",
       "parameters": {
         "operation": "append",
         "sheetId": "YOUR_SPREADSHEET_ID",
@@ -38,6 +36,7 @@
         "options": {},
         "values": "={{ Object.values($json.userData) }}"
       },
+      "id": "GoogleSheets1",
       "name": "Google Sheets",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 1,
@@ -50,22 +49,22 @@
     }
   ],
   "connections": {
-    "Webhook": {
+    "Webhook1": {
       "main": [
         [
           {
-            "node": "Parse OAuth",
+            "node": "Function1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Parse OAuth": {
+    "Function1": {
       "main": [
         [
           {
-            "node": "Google Sheets",
+            "node": "GoogleSheets1",
             "type": "main",
             "index": 0
           }
@@ -75,8 +74,6 @@
   },
   "active": false,
   "settings": {},
-  "id": "google_sync_workflow",
-  "version": 2,
-  "meta": {},
-  "pinData": {}
+  "triggerCount": 0,
+  "versionId": "imported_workflow_1"
 }
