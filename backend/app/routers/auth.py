@@ -7,6 +7,7 @@ from app.services.auth_service import (
     register_user, authenticate_user, generate_tokens, refresh_tokens
 )
 from app.oauth.jwt import verify_token
+# from app.schemas.user_response import UserResponse
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -53,3 +54,10 @@ def refresh(data: RefreshRequest):
         raise HTTPException(401, "Invalid refresh token")
 
     return refresh_tokens(payload["sub"], payload["email"])
+
+# @router.get("/me", response_model=UserResponse)
+# async def me(current_user=Depends(get_current_user)):
+#     """
+#     Returns information about the currently logged-in user
+#     """
+#     return current_user

@@ -1,9 +1,35 @@
 import 'package:flutter/material.dart';
+import '../utils/token_storage.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
+import 'home_screen.dart';
 
-class OpenScreen extends StatelessWidget {
+class OpenScreen extends StatefulWidget {
   const OpenScreen({super.key});
+
+  @override
+  State<OpenScreen> createState() => _OpenScreenState();
+}
+
+class _OpenScreenState extends State<OpenScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkLogin();
+  }
+
+  void _checkLogin() async {
+    final token = await TokenStorage.getAccessToken();
+
+    if (token != null && token.isNotEmpty) {
+      // Auto-login → redirect to HomeScreen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => HomeScreen()),
+      );
+    }
+    // else do nothing → stay on open screen
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +39,7 @@ class OpenScreen extends StatelessWidget {
         children: [
           // Background Image
           Image.asset(
-            'home_image.png',
+            'open_image.png',
             fit: BoxFit.cover,
           ),
           // Overlay for better readability
@@ -25,7 +51,7 @@ class OpenScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // App Title (optional)
+              // App Title
               Text(
                 'Reminder',
                 style: TextStyle(

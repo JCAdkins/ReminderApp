@@ -70,6 +70,36 @@ class AuthService {
     }
   }
 
+
+  // --------------------
+  // REFRESH ACCESS TOKENS
+  // --------------------
+  Future<bool> refreshAccessToken() async {
+  final refreshToken = await TokenStorage.getRefreshToken();
+  if (refreshToken == null || refreshToken.isEmpty) return false;
+
+  try {
+    final response = await api.dio.post(
+      '/auth/refresh',
+      data: {'refresh_token': refreshToken},
+    );
+
+    final loginRes = LoginResponse.fromJson(response.data);
+
+    await TokenStorage.saveTokens(
+      accessToken: loginRes.accessToken,
+      refreshToken: loginRes.refreshToken,
+    );
+
+    return true;
+  } catch (e) {
+    // Could not refresh, maybe refresh token expired
+    await TokenStorage.clearTokens();
+    return false;
+  }
+}
+
+
   // --------------------
   // GET ME
   // --------------------
