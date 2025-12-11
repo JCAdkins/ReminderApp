@@ -1,3 +1,4 @@
+from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -14,6 +15,9 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 class RegisterRequest(BaseModel):
     email: str
     password: str
+    first_name: str
+    last_name: str
+    dob: date
 
 
 class LoginRequest(BaseModel):
@@ -27,7 +31,8 @@ class RefreshRequest(BaseModel):
 
 @router.post("/register")
 def register(data: RegisterRequest, db: Session = Depends(get_db)):
-    user = register_user(db, data.email, data.password)
+    print("data: ", data)
+    user = register_user(db, data.email, data.password, data.first_name, data.last_name, data.dob)
     if not user:
         raise HTTPException(400, "Email already registered")
     return generate_tokens(user)

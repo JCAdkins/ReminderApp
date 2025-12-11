@@ -1,10 +1,11 @@
+from sqlalchemy import Date
 from sqlalchemy.orm import Session
 from app.models.user import User
 from app.oauth.password import hash_password, verify_password
 from app.oauth.jwt import create_access_token, create_refresh_token
 
 
-def register_user(db: Session, email: str, password: str):
+def register_user(db: Session, email: str, password: str, first_name: str, last_name: str, dob: Date):
     existing = db.query(User).filter(User.email == email).first()
     if existing:
         return None
@@ -12,6 +13,9 @@ def register_user(db: Session, email: str, password: str):
     new_user = User(
         email=email,
         password_hash=hash_password(password),
+        first_name=first_name,
+        last_name=last_name,
+        dob=dob
     )
     db.add(new_user)
     db.commit()
