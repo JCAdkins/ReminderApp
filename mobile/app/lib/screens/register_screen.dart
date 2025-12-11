@@ -1,22 +1,89 @@
 import 'package:flutter/material.dart';
+import '../widgets/form_fields/name_field.dart';
+import '../widgets/form_fields/email_field.dart';
+import '../widgets/form_fields/password_field.dart';
+import '../widgets/form_fields/dob_field.dart';
+import '../widgets/error_snackbar.dart';
 import '../api/auth_service.dart';
 import '../api/models/register_request.dart';
-import 'login_screen.dart';
+import '../api/api_exception.dart';
 
 class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  _RegisterScreenState createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final firstNameCtrl = TextEditingController();
-  final lastNameCtrl = TextEditingController();
-  final emailCtrl = TextEditingController();
-  final passCtrl = TextEditingController();
-  final dobCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
-  final auth = AuthService();
-  bool loading = false;
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _dobController = TextEditingController();
+
+  final AuthService _authService = AuthService();
+
+  bool _isLoading = false;
+
+  void _submit() async {
+    if (!_formKey.currentState!.validate()) {
+      return; // Stop if form is invalid
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final request = RegisterRequest(
+      firstName: _firstNameController.text.trim(),
+      lastName: _lastNameController.text.trim(),
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      dob: DateTime.parse(_dobController.text),
+    );
+
+    try {
+      final response = await _authService.register(request);
+
+      if (response.accessToken.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Registration successful!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Navigate to login or home
+        Navigator.pop(context);
+      } else {
+        showErrorSnackBar(
+          context, 
+          "Registration failed. Email may already be in use."
+        );
+      }
+    } on ApiException catch (e) {
+      showErrorSnackBar(context, "Registration failed: ${e.message}");
+    } catch (e) {
+      showErrorSnackBar(context, "Registration failed: ${e.toString()}");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _dobController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,108 +91,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: AppBar(title: const Text("Register")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
+        child: Form(
+          key: _formKey,
+          child: ListView(
             children: [
-              TextField(
-                controller: firstNameCtrl,
-                decoration: const InputDecoration(labelText: "First Name"),
-              ),
-              TextField(
-                controller: lastNameCtrl,
-                decoration: const InputDecoration(labelText: "Last Name"),
-              ),
-              TextField(
-                controller: emailCtrl,
-                decoration: const InputDecoration(labelText: "Email"),
-              ),
-              TextField(
-                controller: passCtrl,
-                decoration: const InputDecoration(labelText: "Password"),
-                obscureText: true,
-              ),
-              TextField(
-                controller: dobCtrl,
-                decoration: const InputDecoration(
-                  labelText: "Date of Birth",
-                  suffixIcon: Icon(Icons.calendar_today),
+              NameField(
+                firstNameController: _firstNameController,
+                lastNameController: _lastNameController,
                 ),
-                readOnly: true,
-                onTap: () async {
-                  final selectedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime(2000, 1, 1),
-                    firstDate: DateTime(1900),
-                    lastDate: DateTime.now(),
-                  );
-
-                  if (selectedDate != null) {
-                    dobCtrl.text =
-                        "${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}";
-                  }
-                },
-              ),
-              const SizedBox(height: 20),
-
-              /// REGISTER BUTTON
-              ElevatedButton(
-                onPressed: loading
-                    ? null
-                    : () async {
-                        setState(() => loading = true);
-
-                        final selectedDob = DateTime.tryParse(dobCtrl.text);
-
-                        if (selectedDob == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Please select a valid date of birth")),
-                        );
-                        setState(() => loading = false);
-                        return;
-                        }
-
-                        final request = RegisterRequest(
-                        firstName: firstNameCtrl.text,
-                        lastName: lastNameCtrl.text,
-                        email: emailCtrl.text,
-                        password: passCtrl.text,
-                        dob: selectedDob, // <-- pass DateTime here
-                        );
-
-                        final response = await auth.register(request);
-
-                        setState(() => loading = false);
-
-                        if (response.accessToken != null && response.accessToken!.isNotEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Registered successfully!")),
-                          );
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => LoginScreen()),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Registration failed")),
-                          );
-                        }
-                      },
-                child: loading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("Register"),
-              ),
-
               const SizedBox(height: 16),
-
-              TextButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginScreen()),
-                  );
-                },
-                child: const Text("Already have an account? Login"),
-              ),
+              EmailField(controller: _emailController),
+              const SizedBox(height: 16),
+              PasswordField(controller: _passwordController),
+              const SizedBox(height: 16),
+              DOBField(controller: _dobController),
+              const SizedBox(height: 32),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton(
+                      onPressed: _submit,
+                      child: const Text("Register"),
+                    ),
             ],
           ),
         ),

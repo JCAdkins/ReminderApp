@@ -6,6 +6,7 @@ import 'models/register_request.dart';
 import 'models/login_response.dart';
 import 'models/user.dart';
 import 'dart:convert';
+import '../api/api_exception.dart';
 
 class AuthService {
   final ApiClient api = ApiClient();
@@ -38,24 +39,31 @@ class AuthService {
     }
   }
 
-// Register user
-    Future<LoginResponse> register(RegisterRequest request) async {
-        print(jsonEncode(request.toJson()));
+  // Register user
+  Future<LoginResponse> register(RegisterRequest request) async {
     try {
-    final response = await _client.post(
-      "/auth/register",
-      data: request.toJson(),
-    );
+      final response = await _client.post(
+        "/auth/register",
+        data: request.toJson(),
+      );
 
-    return LoginResponse.fromJson(response.data);
-    } catch(e){
-        print('Register error: $e');
-        return LoginResponse(      
-            accessToken: "",
-            refreshToken: "",
-            tokenType: "");
+      // If the server responds with 400/500 etc., Dio throws a DioError automatically
+      return LoginResponse.fromJson(response.data);
+    } on DioError catch (e) {
+      // Extract message from the API response
+      String message = "Registration failed";
+      if (e.response != null && e.response?.data != null) {
+        final data = e.response!.data;
+        // FastAPI returns { "detail": "..." }
+        message = data['detail'] ?? message;
+      }
+      // Throw a custom exception
+      throw ApiException(message);
+    } catch (e) {
+      throw ApiException("An unexpected error occurred");
     }
   }
+
 
   Future<User> getMe() async {
     final res = await api.dio.get("/auth/me");

@@ -31,7 +31,6 @@ class RefreshRequest(BaseModel):
 
 @router.post("/register")
 def register(data: RegisterRequest, db: Session = Depends(get_db)):
-    print("data: ", data)
     user = register_user(db, data.email, data.password, data.first_name, data.last_name, data.dob)
     if not user:
         raise HTTPException(400, "Email already registered")
