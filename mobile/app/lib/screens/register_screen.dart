@@ -7,6 +7,7 @@ import '../widgets/error_snackbar.dart';
 import '../api/auth_service.dart';
 import '../api/models/register_request.dart';
 import '../api/api_exception.dart';
+import './home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -29,13 +30,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
 
   void _submit() async {
-    if (!_formKey.currentState!.validate()) {
-      return; // Stop if form is invalid
-    }
+    if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     final request = RegisterRequest(
       firstName: _firstNameController.text.trim(),
@@ -46,32 +43,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     try {
-      final response = await _authService.register(request);
+      final success = await _authService.register(request);
 
-      if (response.accessToken.isNotEmpty) {
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Registration successful!"),
             backgroundColor: Colors.green,
           ),
         );
-
-        // Navigate to login or home
-        Navigator.pop(context);
-      } else {
-        showErrorSnackBar(
-          context, 
-          "Registration failed. Email may already be in use."
+         Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => HomeScreen()),
         );
+      } else {
+        showErrorSnackBar(context, "Registration failed. Email may already be in use.");
       }
     } on ApiException catch (e) {
       showErrorSnackBar(context, "Registration failed: ${e.message}");
     } catch (e) {
       showErrorSnackBar(context, "Registration failed: ${e.toString()}");
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
@@ -87,32 +80,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height - kToolbarHeight;
+
     return Scaffold(
       appBar: AppBar(title: const Text("Register")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              NameField(
-                firstNameController: _firstNameController,
-                lastNameController: _lastNameController,
-                ),
-              const SizedBox(height: 16),
-              EmailField(controller: _emailController),
-              const SizedBox(height: 16),
-              PasswordField(controller: _passwordController),
-              const SizedBox(height: 16),
-              DOBField(controller: _dobController),
-              const SizedBox(height: 32),
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                      onPressed: _submit,
-                      child: const Text("Register"),
+      body: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: screenHeight),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    NameField(
+                      firstNameController: _firstNameController,
+                      lastNameController: _lastNameController,
                     ),
-            ],
+                    const SizedBox(height: 16),
+                    EmailField(controller: _emailController),
+                    const SizedBox(height: 16),
+                    PasswordField(controller: _passwordController),
+                    const SizedBox(height: 16),
+                    DOBField(controller: _dobController),
+                    const SizedBox(height: 32),
+                    _isLoading
+                        ? const CircularProgressIndicator()
+                        : ElevatedButton(
+                            onPressed: _submit,
+                            child: const Text("Register"),
+                          ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
