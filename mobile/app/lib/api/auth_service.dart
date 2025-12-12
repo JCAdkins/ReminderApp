@@ -1,3 +1,5 @@
+import 'dart:convert' show jsonEncode;
+
 import 'package:dio/dio.dart';
 import 'api_client.dart';
 import 'models/login_request.dart';
@@ -29,11 +31,12 @@ class AuthService {
       );
 
       return true;
-    } on DioError catch (e) {
+    } on DioException catch (e) {
       String message = "Login failed";
       if (e.response != null && e.response?.data != null) {
         message = e.response?.data['detail'] ?? message;
       }
+
       throw ApiException(message);
     } catch (e) {
       throw ApiException("Unexpected login error");
@@ -59,7 +62,7 @@ class AuthService {
       );
 
       return true;
-    } on DioError catch (e) {
+    } on DioException catch (e) {
       String message = "Registration failed";
       if (e.response != null && e.response?.data != null) {
         message = e.response?.data['detail'] ?? message;
@@ -70,35 +73,33 @@ class AuthService {
     }
   }
 
-
   // --------------------
   // REFRESH ACCESS TOKENS
   // --------------------
   Future<bool> refreshAccessToken() async {
-  final refreshToken = await TokenStorage.getRefreshToken();
-  if (refreshToken == null || refreshToken.isEmpty) return false;
+    final refreshToken = await TokenStorage.getRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) return false;
 
-  try {
-    final response = await api.dio.post(
-      '/auth/refresh',
-      data: {'refresh_token': refreshToken},
-    );
+    try {
+      final response = await api.dio.post(
+        '/auth/refresh',
+        data: {'refresh_token': refreshToken},
+      );
 
-    final loginRes = LoginResponse.fromJson(response.data);
+      final loginRes = LoginResponse.fromJson(response.data);
 
-    await TokenStorage.saveTokens(
-      accessToken: loginRes.accessToken,
-      refreshToken: loginRes.refreshToken,
-    );
+      await TokenStorage.saveTokens(
+        accessToken: loginRes.accessToken,
+        refreshToken: loginRes.refreshToken,
+      );
 
-    return true;
-  } catch (e) {
-    // Could not refresh, maybe refresh token expired
-    await TokenStorage.clearTokens();
-    return false;
+      return true;
+    } catch (e) {
+      // Could not refresh, maybe refresh token expired
+      await TokenStorage.clearTokens();
+      return false;
+    }
   }
-}
-
 
   // --------------------
   // GET ME

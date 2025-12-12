@@ -39,7 +39,7 @@ class _OpenScreenState extends State<OpenScreen> {
         children: [
           // Background Image
           Image.asset(
-            'open_image.png',
+            'assets/open_image.png',
             fit: BoxFit.cover,
           ),
           // Overlay for better readability
@@ -71,7 +71,8 @@ class _OpenScreenState extends State<OpenScreen> {
               // Login Button
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

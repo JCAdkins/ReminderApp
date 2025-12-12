@@ -1,7 +1,4 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'package:table_calendar/table_calendar.dart';
 import '../api/auth_service.dart';
 import './open_screen.dart';
 import '../widgets/blurred_panel.dart';
@@ -10,7 +7,7 @@ import '../widgets/swipeable_panel.dart';
 import '../widgets/reminder_calendar.dart';
 
 class HomeScreen extends StatefulWidget {
-  HomeScreen({super.key});
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -65,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage("home_image.png"),
+                image: AssetImage("assets/home_image.png"),
                 fit: BoxFit.cover,
               ),
             ),
@@ -106,65 +103,61 @@ class _HomeScreenState extends State<HomeScreen> {
                   // Create Reminder Button
                   Padding(
                     padding: const EdgeInsets.all(12.0),
-                    child:
-                        NeonButton(
-                            label: "Create New Reminder",
-                            icon: Icons.add,
-                            onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                content: Text("Create Reminder tapped"),
-                                ),
-                            );
-                            },
-                        ),
+                    child: NeonButton(
+                      label: "Create New Reminder",
+                      icon: Icons.add,
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Create Reminder tapped"),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 10),
 
                   // Swipeable panel
-                    Expanded(
+                  Expanded(
                     child: SwipeablePanel(
-                        pages: [
+                      pages: [
                         BlurredPanel(
-                            outerPadding: const EdgeInsets.all(12),
-                            child: const Center(
+                          outerPadding: const EdgeInsets.all(12),
+                          child: const Center(
                             child: Text(
-                                "No reminders yet.\nTap the + button to add one!",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
+                              "No reminders yet.\nTap the + button to add one!",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.white,
                                 fontWeight: FontWeight.w300,
-                                ),
+                              ),
                             ),
-                            ),
+                          ),
                         ),
-
                         Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Container(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Container(
                             padding: const EdgeInsets.all(8.0),
                             decoration: BoxDecoration(
-                                color: Colors.grey[50],
-                                borderRadius: BorderRadius.circular(20),
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             child: ReminderCalendar(
-                                focusedDay: _focusedDay,
-                                selectedDay: _selectedDay,
-                                onDaySelected: (selected, focused) {
-                                    setState(() {
-                                    _selectedDay = selected;
-                                    _focusedDay = focused;
-                                    });
-                                },
-                                ),
-
+                              focusedDay: _focusedDay,
+                              selectedDay: _selectedDay,
+                              onDaySelected: (selected, focused) {
+                                setState(() {
+                                  _selectedDay = selected;
+                                  _focusedDay = focused;
+                                });
+                              },
                             ),
+                          ),
                         ),
-                        ],
+                      ],
                     ),
-                    )
-
+                  )
                 ],
               ),
             ),

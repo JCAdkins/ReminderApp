@@ -6,7 +6,7 @@ class TokenStorage {
   static const _accessKey = "access_token";
   static const _refreshKey = "refresh_token";
 
-  // Save tokens
+  // Save tokens simultaneously
   static Future<void> saveTokens({
     required String accessToken,
     String? refreshToken,
@@ -19,11 +19,9 @@ class TokenStorage {
   }
 
   // Get tokens
-  static Future<String?> getAccessToken() =>
-      _storage.read(key: _accessKey);
+  static Future<String?> getAccessToken() => _storage.read(key: _accessKey);
 
-  static Future<String?> getRefreshToken() =>
-      _storage.read(key: _refreshKey);
+  static Future<String?> getRefreshToken() => _storage.read(key: _refreshKey);
 
   // Delete tokens
   static Future<void> clearTokens() async {

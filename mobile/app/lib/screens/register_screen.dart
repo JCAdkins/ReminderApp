@@ -52,12 +52,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
             backgroundColor: Colors.green,
           ),
         );
-         Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => HomeScreen()),
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => HomeScreen()),
         );
       } else {
-        showErrorSnackBar(context, "Registration failed. Email may already be in use.");
+        showErrorSnackBar(
+            context, "Registration failed. Email may already be in use.");
       }
     } on ApiException catch (e) {
       showErrorSnackBar(context, "Registration failed: ${e.message}");
@@ -104,6 +105,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 16),
                     PasswordField(controller: _passwordController),
                     const SizedBox(height: 16),
+                    // Updated DOB field with custom picker
                     DOBField(controller: _dobController),
                     const SizedBox(height: 32),
                     _isLoading
