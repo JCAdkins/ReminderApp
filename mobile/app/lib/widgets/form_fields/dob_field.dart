@@ -24,6 +24,7 @@ class _DOBFieldState extends State<DOBField> {
   void initState() {
     super.initState();
     // Parse controller text if available
+    print("text: ${widget.controller.text}");
     if (widget.controller.text.isNotEmpty) {
       try {
         final date = DateTime.parse(widget.controller.text);
@@ -57,12 +58,45 @@ class _DOBFieldState extends State<DOBField> {
   }
 
   void _openDOBPicker() {
-    final currentYear = DateTime.now().year;
+    final now = DateTime.now();
+    final currentYear = now.year;
     final totalYears = currentYear - 1900 + 1;
 
+    // STEP 1: Re-read the controller text
+    if (widget.controller.text.isNotEmpty) {
+      try {
+        final parts = widget.controller.text.split('-'); // MM-DD-YYYY format
+        if (parts.length == 3) {
+          _selectedMonth = int.parse(parts[0]);
+          _selectedDay = int.parse(parts[1]);
+          _selectedYear = int.parse(parts[2]);
+        }
+      } catch (_) {}
+    }
+
+    // STEP 2: Recreate scroll controllers using updated values
+    _monthController = FixedExtentScrollController(
+      initialItem: (_virtualItemCount ~/ 2) -
+          (_virtualItemCount ~/ 2) % 12 +
+          (_selectedMonth - 1),
+    );
+
+    _dayController = FixedExtentScrollController(
+      initialItem: (_virtualItemCount ~/ 2) -
+          (_virtualItemCount ~/ 2) % 31 +
+          (_selectedDay - 1),
+    );
+
+    _yearController = FixedExtentScrollController(
+      initialItem: (_virtualItemCount ~/ 2) -
+          (_virtualItemCount ~/ 2) % totalYears +
+          (_selectedYear - 1900),
+    );
+
+    // STEP 3: Show dialog
     showDialog(
       context: context,
-      builder: (context) => Dialog(
+      builder: (_) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
           padding: const EdgeInsets.all(16),
@@ -72,59 +106,43 @@ class _DOBFieldState extends State<DOBField> {
             children: [
               Expanded(
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    // Month picker
                     Expanded(
                       child: CupertinoPicker.builder(
                         scrollController: _monthController,
                         itemExtent: 32,
-                        onSelectedItemChanged: (index) {
-                          setState(() {
-                            _selectedMonth = (index % 12) + 1;
-                          });
-                        },
                         childCount: _virtualItemCount,
-                        itemBuilder: (context, index) {
-                          final month = (index % 12) + 1;
-                          return Center(child: Text(month.toString()));
+                        onSelectedItemChanged: (i) {
+                          _selectedMonth = (i % 12) + 1;
                         },
+                        itemBuilder: (_, i) =>
+                            Center(child: Text("${(i % 12) + 1}")),
                       ),
                     ),
-                    // Day picker
                     Expanded(
                       child: CupertinoPicker.builder(
                         scrollController: _dayController,
                         itemExtent: 32,
-                        onSelectedItemChanged: (index) {
-                          setState(() {
-                            _selectedDay = (index % 31) + 1;
-                          });
-                        },
                         childCount: _virtualItemCount,
-                        itemBuilder: (context, index) {
-                          final day = (index % 31) + 1;
-                          return Center(child: Text(day.toString()));
+                        onSelectedItemChanged: (i) {
+                          _selectedDay = (i % 31) + 1;
                         },
+                        itemBuilder: (_, i) =>
+                            Center(child: Text("${(i % 31) + 1}")),
                       ),
                     ),
-                    // Year picker
                     Expanded(
                       child: CupertinoPicker.builder(
                         scrollController: _yearController,
                         itemExtent: 32,
-                        onSelectedItemChanged: (index) {
-                          setState(() {
-                            _selectedYear = 1900 + (index % totalYears);
-                          });
-                        },
                         childCount: _virtualItemCount,
-                        itemBuilder: (context, index) {
-                          final year = 1900 + (index % totalYears);
-                          return Center(child: Text(year.toString()));
+                        onSelectedItemChanged: (i) {
+                          _selectedYear = 1900 + (i % totalYears);
                         },
+                        itemBuilder: (_, i) =>
+                            Center(child: Text("${1900 + (i % totalYears)}")),
                       ),
-                    ),
+                    )
                   ],
                 ),
               ),
@@ -132,11 +150,13 @@ class _DOBFieldState extends State<DOBField> {
               ElevatedButton(
                 onPressed: () {
                   widget.controller.text =
-                      "${_selectedYear.toString().padLeft(4, '0')}-${_selectedMonth.toString().padLeft(2, '0')}-${_selectedDay.toString().padLeft(2, '0')}";
+                      "${_selectedMonth.toString().padLeft(2, '0')}-"
+                      "${_selectedDay.toString().padLeft(2, '0')}-"
+                      "${_selectedYear.toString()}";
                   Navigator.pop(context);
                 },
                 child: const Text("Done"),
-              )
+              ),
             ],
           ),
         ),
