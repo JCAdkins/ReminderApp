@@ -6,10 +6,10 @@ class DOBField extends StatefulWidget {
   const DOBField({super.key, required this.controller});
 
   @override
-  _DOBFieldState createState() => _DOBFieldState();
+  DOBFieldState createState() => DOBFieldState();
 }
 
-class _DOBFieldState extends State<DOBField> {
+class DOBFieldState extends State<DOBField> {
   int _selectedDay = 1;
   int _selectedMonth = 1;
   int _selectedYear = 2000;
@@ -20,11 +20,45 @@ class _DOBFieldState extends State<DOBField> {
 
   static const int _virtualItemCount = 10000;
 
+  int _daysInMonth(int month, int year) {
+    // February
+    if (month == 2) {
+      final isLeapYear =
+          (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+      return isLeapYear ? 29 : 28;
+    }
+
+    // April, June, September, November
+    const monthsWith30Days = [4, 6, 9, 11];
+    if (monthsWith30Days.contains(month)) {
+      return 30;
+    }
+
+    // All others
+    return 31;
+  }
+
+  void _snapDayIfNeeded() {
+    final maxDay = _daysInMonth(_selectedMonth, _selectedYear);
+
+    if (_selectedDay > maxDay) {
+      _selectedDay = maxDay;
+
+      // Snap the wheel visually
+      final baseIndex =
+          _dayController.selectedItem - (_dayController.selectedItem % 31);
+      _dayController.animateToItem(
+        baseIndex + (maxDay - 1),
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     // Parse controller text if available
-    print("text: ${widget.controller.text}");
     if (widget.controller.text.isNotEmpty) {
       try {
         final date = DateTime.parse(widget.controller.text);
@@ -114,6 +148,7 @@ class _DOBFieldState extends State<DOBField> {
                         childCount: _virtualItemCount,
                         onSelectedItemChanged: (i) {
                           _selectedMonth = (i % 12) + 1;
+                          _snapDayIfNeeded();
                         },
                         itemBuilder: (_, i) =>
                             Center(child: Text("${(i % 12) + 1}")),
@@ -124,11 +159,50 @@ class _DOBFieldState extends State<DOBField> {
                         scrollController: _dayController,
                         itemExtent: 32,
                         childCount: _virtualItemCount,
-                        onSelectedItemChanged: (i) {
-                          _selectedDay = (i % 31) + 1;
+                        onSelectedItemChanged: (index) {
+                          final day = (index % 31) + 1;
+                          final maxDay =
+                              _daysInMonth(_selectedMonth, _selectedYear);
+
+                          if (day <= maxDay) {
+                            setState(() {
+                              _selectedDay = day;
+                            });
+                          } else {
+                            // Snap back to last valid day
+                            final safeIndex = (_virtualItemCount ~/ 2) -
+                                (_virtualItemCount ~/ 2) % 31 +
+                                (maxDay - 1);
+
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              _dayController.animateToItem(
+                                safeIndex,
+                                duration: const Duration(milliseconds: 150),
+                                curve: Curves.easeOut,
+                              );
+                            });
+                          }
                         },
-                        itemBuilder: (_, i) =>
-                            Center(child: Text("${(i % 31) + 1}")),
+                        itemBuilder: (context, index) {
+                          final day = (index % 31) + 1;
+                          final maxDay =
+                              _daysInMonth(_selectedMonth, _selectedYear);
+                          final isValid = day <= maxDay;
+
+                          return Center(
+                            child: Text(
+                              day.toString(),
+                              style: TextStyle(
+                                color: isValid
+                                    ? Colors.black
+                                    : Colors.grey.withValues(alpha: 0.4),
+                                fontWeight: isValid
+                                    ? FontWeight.w500
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                     Expanded(
@@ -138,6 +212,7 @@ class _DOBFieldState extends State<DOBField> {
                         childCount: _virtualItemCount,
                         onSelectedItemChanged: (i) {
                           _selectedYear = 1900 + (i % totalYears);
+                          _snapDayIfNeeded();
                         },
                         itemBuilder: (_, i) =>
                             Center(child: Text("${1900 + (i % totalYears)}")),

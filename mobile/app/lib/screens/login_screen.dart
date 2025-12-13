@@ -48,64 +48,67 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     /// LOGIN BUTTON
                     ElevatedButton(
-                    onPressed: () async {
+                      onPressed: () async {
                         if (_formKey.currentState!.validate()) {
-                            final request = LoginRequest(
-                                email: emailCtrl.text.trim(),
-                                password: passCtrl.text,
-                            );
+                          final request = LoginRequest(
+                            email: emailCtrl.text.trim(),
+                            password: passCtrl.text,
+                          );
 
-                            try{
-                                final success = await auth.login(request);
+                          try {
+                            final success = await auth.login(request);
 
-                                if (success) {
-                                    Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(builder: (_) => HomeScreen()),
-                                    );
-                                } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Invalid credentials")),
-                                    );
-                                }
-                            } on ApiException catch(e){
-                                showErrorSnackBar(context, e.message);
+                            if (!context.mounted) return;
+
+                            if (success) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(builder: (_) => HomeScreen()),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text("Invalid credentials")),
+                              );
                             }
+                          } on ApiException catch (e) {
+                            showErrorSnackBar(context, e.message);
+                          }
                         }
-                    },
-                    child: const Text("Login"),
+                      },
+                      child: const Text("Login"),
                     ),
-
 
                     /// LESS SPACE BEFORE REGISTER
                     const SizedBox(height: 24),
 
                     /// FORGOT PASSWORD
                     Align(
-                        alignment: Alignment.center,
-                        child: TextButton(
+                      alignment: Alignment.center,
+                      child: TextButton(
                         onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                          ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                                content: Text("Forgot Password tapped"),
+                              content: Text("Forgot Password tapped"),
                             ),
-                            );
+                          );
                         },
                         child: const Text("Forgot Password?"),
-                        ),
+                      ),
                     ),
 
                     /// GO TO REGISTER
                     TextButton(
-                        onPressed: () {
+                      onPressed: () {
                         Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const RegisterScreen()),
                         );
-                        },
-                        child: const Text("Don't have an account? Register"),
+                      },
+                      child: const Text("Don't have an account? Register"),
                     ),
-                    ],
+                  ],
                 ),
               ),
             ),

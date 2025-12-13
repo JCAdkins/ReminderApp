@@ -13,10 +13,10 @@ class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  _RegisterScreenState createState() => _RegisterScreenState();
+  RegisterScreenState createState() => RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _firstNameController = TextEditingController();
@@ -29,43 +29,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _isLoading = false;
 
-  void _submit() async {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+
+    final dobText = _dobController.text.trim();
+    final parts = dobText.split('-');
+
+    final dob = DateTime(
+      int.parse(parts[2]), // year
+      int.parse(parts[0]), // month
+      int.parse(parts[1]), // day
+    );
 
     final request = RegisterRequest(
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
       email: _emailController.text.trim(),
       password: _passwordController.text,
-      dob: DateTime.parse(_dobController.text),
+      dob: dob,
     );
 
-    try {
-      final success = await _authService.register(request);
+    bool? success;
+    String? errorMessage;
 
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Registration successful!"),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => HomeScreen()),
-        );
-      } else {
-        showErrorSnackBar(
-            context, "Registration failed. Email may already be in use.");
-      }
+    try {
+      success = await _authService.register(request);
     } on ApiException catch (e) {
-      showErrorSnackBar(context, "Registration failed: ${e.message}");
+      errorMessage = "Registration failed: ${e.message}";
     } catch (e) {
-      showErrorSnackBar(context, "Registration failed: ${e.toString()}");
-    } finally {
-      setState(() => _isLoading = false);
+      errorMessage = "Registration failed: ${e.toString()}";
+    }
+
+    // 🔐 IMPORTANT: Guard all UI work
+    if (!mounted) return;
+
+    setState(() => _isLoading = false);
+
+    if (success == true) {
+      _onRegisterSuccess();
+    } else {
+      _onRegisterError(
+        errorMessage ?? "Registration failed. Email may already be in use.",
+      );
     }
   }
 
@@ -122,5 +129,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       ),
     );
+  }
+
+  void _onRegisterSuccess() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Registration successful!"),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => HomeScreen()),
+    );
+  }
+
+  void _onRegisterError(String message) {
+    showErrorSnackBar(context, message);
   }
 }

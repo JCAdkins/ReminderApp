@@ -21,12 +21,10 @@ class _OpenScreenState extends State<OpenScreen> {
   void _checkLogin() async {
     final token = await TokenStorage.getAccessToken();
 
+    if (!context.mounted) return;
+
     if (token != null && token.isNotEmpty) {
-      // Auto-login → redirect to HomeScreen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => HomeScreen()),
-      );
+      _goToHome();
     }
     // else do nothing → stay on open screen
   }
@@ -44,7 +42,7 @@ class _OpenScreenState extends State<OpenScreen> {
           ),
           // Overlay for better readability
           Container(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
           ),
           // Content
           Column(
@@ -120,6 +118,13 @@ class _OpenScreenState extends State<OpenScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _goToHome() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => HomeScreen()),
     );
   }
 }
