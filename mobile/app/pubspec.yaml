@@ -14,6 +14,9 @@ dependencies:
   # State management
   flutter_riverpod: ^2.5.0
 
+  # Google Sign-in
+  google_sign_in: ^6.2.1
+
   # Effects
   smooth_page_indicator: ^2.0.0
 
@@ -37,6 +40,7 @@ dependencies:
 
   # UI / Utils
   google_fonts: ^6.2.1
+  flutter_svg: ^2.2.3
 
 dev_dependencies:
   flutter_test:
@@ -49,4 +53,5 @@ flutter:
     - assets/
     - assets/open_image.png
     - assets/home_image.png
+    - assets/google_logo.svg
     - .env

@@ -1,5 +1,3 @@
-import 'dart:convert' show jsonEncode;
-
 import 'package:dio/dio.dart';
 import 'api_client.dart';
 import 'models/login_request.dart';
@@ -30,6 +28,31 @@ class AuthService {
         refreshToken: loginRes.refreshToken,
       );
 
+      return true;
+    } on DioException catch (e) {
+      String message = "Login failed";
+      if (e.response != null && e.response?.data != null) {
+        message = e.response?.data['detail'] ?? message;
+      }
+
+      throw ApiException(message);
+    } catch (e) {
+      throw ApiException("Unexpected login error");
+    }
+  }
+
+  Future<bool> loginWithGoogle(String idToken) async {
+    try {
+      final response = await api.dio.post(
+        '/auth/google',
+        data: {'id_token': idToken},
+      );
+
+      print("data: ${response.data}");
+      final token = response.data['access_token'];
+      if (token == null) return false;
+
+      await TokenStorage.saveTokens(accessToken: token, refreshToken: null);
       return true;
     } on DioException catch (e) {
       String message = "Login failed";

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:mobile_app/api/gooogle_auth_service.dart';
 import '../api/auth_service.dart';
 import '../api/models/login_request.dart';
 import '../api/api_exception.dart';
@@ -77,6 +79,35 @@ class _LoginScreenState extends State<LoginScreen> {
                         }
                       },
                       child: const Text("Login"),
+                    ),
+
+                    /// LESS SPACE BEFORE REGISTER
+                    const SizedBox(height: 16),
+
+                    ElevatedButton.icon(
+                      icon: SvgPicture.asset(
+                        'assets/google_logo.svg',
+                        height: 20,
+                        width: 20,
+                      ),
+                      label: const Text("Continue with Google"),
+                      onPressed: () async {
+                        final success =
+                            await GoogleAuthService().signInWithGoogle();
+
+                        if (!mounted) return;
+
+                        // Schedule navigation after the frame to avoid context across async gap
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!mounted) return;
+                          if (success) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (_) => HomeScreen()),
+                            );
+                          }
+                        });
+                      },
                     ),
 
                     /// LESS SPACE BEFORE REGISTER
