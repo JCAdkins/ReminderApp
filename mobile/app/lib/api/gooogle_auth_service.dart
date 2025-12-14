@@ -1,22 +1,55 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
 import 'package:google_sign_in/google_sign_in.dart';
-import 'auth_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class GoogleAuthService {
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
-  );
+  late final GoogleSignIn _googleSignIn;
 
-  Future<bool> signInWithGoogle() async {
-    final googleUser = await _googleSignIn.signIn();
-    if (googleUser == null) return false;
+  GoogleAuthService() {
+    _googleSignIn = GoogleSignIn(
+      clientId: _getClientId(),
+      scopes: ['email', 'profile'],
+    );
+  }
 
-    final googleAuth = await googleUser.authentication;
-    final idToken = googleAuth.idToken;
-
-    if (idToken == null) {
-      throw Exception("Google ID token missing");
+  String _getClientId() {
+    if (kIsWeb) {
+      return dotenv.env['GOOGLE_CID_WEB']!;
+    } else if (Platform.isAndroid) {
+      return dotenv.env['GOOGLE_CID_ANDROID']!;
+    } else if (Platform.isIOS) {
+      return dotenv.env['GOOGLE_CID_iOS']!;
+    } else {
+      throw UnsupportedError("Unsupported platform");
     }
+  }
 
-    return AuthService().loginWithGoogle(idToken);
+  Future<GoogleSignInAccount?> signInWithGoogle() async {
+    try {
+      if (kIsWeb) {
+        // Silent sign-in first
+        var account = await _googleSignIn.signInSilently();
+        if (account != null) return account;
+      }
+
+      return await _googleSignIn.signIn();
+    } catch (e) {
+      print('Google Sign-In error: $e');
+      return null;
+    }
+  }
+
+  Future<void> signOut() async {
+    await _googleSignIn.signOut();
+  }
+
+  /// Get the current signed-in user (if any)
+  Future<GoogleSignInAccount?> getCurrentUser() async {
+    if (kIsWeb) {
+      return await _googleSignIn.signInSilently();
+    } else {
+      return _googleSignIn.currentUser;
+    }
   }
 }

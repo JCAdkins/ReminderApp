@@ -85,28 +85,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 16),
 
                     ElevatedButton.icon(
-                      icon: SvgPicture.asset(
-                        'assets/google_logo.svg',
-                        height: 20,
-                        width: 20,
-                      ),
+                      icon: SvgPicture.asset('assets/google_logo.svg',
+                          height: 20),
                       label: const Text("Continue with Google"),
                       onPressed: () async {
-                        final success =
+                        final account =
                             await GoogleAuthService().signInWithGoogle();
-
-                        if (!mounted) return;
-
-                        // Schedule navigation after the frame to avoid context across async gap
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (!mounted) return;
-                          if (success) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (_) => HomeScreen()),
-                            );
-                          }
-                        });
+                        if (account != null) {
+                          // Successfully signed in
+                          print("User email: ${account.email}");
+                          // Navigate to home or save token as needed
+                        }
                       },
                     ),
 
