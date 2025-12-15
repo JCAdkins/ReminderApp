@@ -11,7 +11,7 @@ class User(Base):
     password_hash = Column(String, nullable=True)  # nullable if using OAuth only
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
-    dob = Column(Date, nullable=False)
+    dob = Column(Date, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     google_id = Column(String, unique=True, nullable=True)

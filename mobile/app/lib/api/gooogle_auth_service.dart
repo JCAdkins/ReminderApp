@@ -36,17 +36,26 @@ class GoogleAuthService {
       if (kIsWeb) {
         // Silent sign-in first
         googleUser = await _googleSignIn.signInSilently();
-      }
-      googleUser ??= await _googleSignIn.signIn();
-      final googleAuth = await googleUser!.authentication;
-      final idToken = googleAuth.idToken;
-      if (idToken == null) {
-        print('Google Sign-In failed or canceled');
-        return false;
-      }
-      final success = await auth.loginWithGoogle(idToken);
+        googleUser ??= await _googleSignIn.signIn();
+        final googleAuth = await googleUser!.authentication;
+        if (googleAuth.accessToken == null) {
+          return false;
+        }
+        final success = await auth.loginWithGoogleWeb(
+            googleUser.email, googleUser.id, googleAuth.accessToken!);
+        return success;
+      } else {
+        googleUser ??= await _googleSignIn.signIn();
+        final googleAuth = await googleUser!.authentication;
+        final idToken = googleAuth.idToken;
+        if (idToken == null) {
+          print('Google Sign-In failed or canceled');
+          return false;
+        }
+        final success = await auth.loginWithGoogle(idToken);
 
-      return success;
+        return success;
+      }
     } on DioException catch (e) {
       String message = "Login failed";
       if (e.response != null && e.response?.data != null) {

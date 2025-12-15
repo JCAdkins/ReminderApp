@@ -1,5 +1,5 @@
-import datetime
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import null
 from sqlalchemy.orm import Session
 
 from app.services.oauth_google_service import save_google_tokens, get_google_tokens
@@ -8,12 +8,12 @@ from app.schemas.oauth_token import OAuthTokenCreate   # ✅ Use Pydantic schema
 from app.oauth.require_access_token import require_access_token
 from app.models.user import User
 from app.services.auth_service import generate_tokens
-from app.utils.google_helpers import verify_google_id_token
+from app.utils.google_helpers import verify_google_access_token, verify_google_id_token
 
 
 router = APIRouter(prefix="/auth/google", tags=["Google OAuth"])
 
-@router.post("")
+@router.post("/mobile")
 def google_login(payload: dict, db: Session = Depends(get_db)):
     print("payload: ", payload)
     id_token_str = payload.get("id_token")
@@ -56,25 +56,53 @@ def google_login(payload: dict, db: Session = Depends(get_db)):
         "token_type": "bearer"
     }
 
-# @router.post("/store")
-# def store_google_tokens(
-#     data: OAuthTokenCreate,
-#     payload=Depends(require_access_token),
-#     db: Session = Depends(get_db)
-# ):
-#     expires_in = None
-#     if data.expires_at:
-#         expires_in = (data.expires_at - datetime.datetime.utcnow()).total_seconds()
+@router.post("/web")
+def google_web_login(payload: dict, db: Session = Depends(get_db)):
+    email = payload.get("email")
+    google_id = payload.get("google_id")
+    access_token = payload.get("access_token")
 
-#     token = save_google_tokens(
-#         db=db,
-#         user_id=int(payload["sub"]),
-#         access_token=data.access_token,
-#         refresh_token=data.refresh_token,
-#         expires_in=expires_in,
-#     )
+    if not email or not google_id or not access_token:
+        raise HTTPException(status_code=400, detail="Missing required fields")
 
-#     return {"status": "stored", "expires_at": token.expires_at}
+    # Verify token with Google
+    token_info = verify_google_access_token(access_token)
+
+    # Validate token contents
+    if token_info.get("email") != email:
+        raise HTTPException(status_code=401, detail="Email mismatch")
+
+    if token_info.get("sub") != google_id:
+        raise HTTPException(status_code=401, detail="Google ID mismatch")
+
+    # Optional but recommended
+    if token_info.get("email_verified") != "true":
+        raise HTTPException(status_code=401, detail="Email not verified")
+
+    # Find user
+    user = db.query(User).filter(
+        (User.email == email) | (User.google_id == google_id)
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not registered"
+        )
+        
+    # Link Google ID if missing
+    if not user.google_id:
+        user.google_id = google_id
+        db.commit()
+
+    # 4Issue backend tokens
+    tokens = generate_tokens(user)
+
+    return {
+        "access_token": tokens["access_token"],
+        "refresh_token": tokens["refresh_token"],
+        "token_type": "bearer",
+    }
 
 
 @router.get("/get")

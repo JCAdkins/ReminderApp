@@ -44,8 +44,34 @@ class AuthService {
   Future<bool> loginWithGoogle(String idToken) async {
     try {
       final response = await api.dio.post(
-        '/auth/google',
+        '/auth/google/mobile',
         data: {'id_token': idToken},
+      );
+
+      if (response.data == null) return false;
+
+      await TokenStorage.saveTokens(
+          accessToken: response.data['access_token'],
+          refreshToken: response.data['refresh_token']);
+      return true;
+    } on DioException catch (e) {
+      String message = "Login failed";
+      if (e.response != null && e.response?.data != null) {
+        message = e.response?.data['detail'] ?? message;
+      }
+
+      throw ApiException(message);
+    } catch (e) {
+      throw ApiException("Unexpected login error");
+    }
+  }
+
+  Future<bool> loginWithGoogleWeb(
+      String email, String id, String accessToken) async {
+    try {
+      final response = await api.dio.post(
+        '/auth/google/web',
+        data: {'email': email, "google_id": id, "access_token": accessToken},
       );
 
       if (response.data == null) return false;
