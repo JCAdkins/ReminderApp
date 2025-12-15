@@ -1,11 +1,11 @@
 import 'package:dio/dio.dart';
+import 'package:mobile_app/api/api_exception.dart';
+import 'package:mobile_app/utils/token_storage.dart';
 import 'api_client.dart';
 import 'models/login_request.dart';
 import 'models/register_request.dart';
 import 'models/login_response.dart';
 import 'models/user.dart';
-import '../api/api_exception.dart';
-import '../utils/token_storage.dart';
 
 class AuthService {
   final ApiClient api = ApiClient();
@@ -89,6 +89,22 @@ class AuthService {
       throw ApiException(message);
     } catch (e) {
       throw ApiException("Unexpected login error");
+    }
+  }
+
+  // Auto-login
+  Future<bool> tryAutoLogin() async {
+    try {
+      // 1️⃣ Check access token
+      final res = await api.dio.get("/auth/me");
+      print("res in auth_service line 100: $res");
+      return true;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        // 2️⃣ Try refresh
+        return await refreshAccessToken();
+      }
+      return false;
     }
   }
 

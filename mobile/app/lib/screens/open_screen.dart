@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/token_storage.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
+import '../api//auth_service.dart';
 import 'home_screen.dart';
 
 class OpenScreen extends StatefulWidget {
@@ -12,21 +13,32 @@ class OpenScreen extends StatefulWidget {
 }
 
 class _OpenScreenState extends State<OpenScreen> {
+  final auth = AuthService();
+
   @override
   void initState() {
     super.initState();
-    _checkLogin();
-  }
 
-  void _checkLogin() async {
-    final token = await TokenStorage.getAccessToken();
+    void checkLogin() async {
+      final accessToken = await TokenStorage.getAccessToken();
+      final refreshToken = await TokenStorage.getRefreshToken();
 
-    if (!context.mounted) return;
+      if (!mounted) return;
 
-    if (token != null && token.isNotEmpty) {
-      _goToHome();
+      if (accessToken == null && refreshToken == null) {
+        // No tokens stored -> user must log in
+        return;
+      }
+
+      // Try auto-login with either token
+      final success = await auth.tryAutoLogin();
+
+      if (success) {
+        _goToHome();
+      }
     }
-    // else do nothing → stay on open screen
+
+    checkLogin();
   }
 
   @override

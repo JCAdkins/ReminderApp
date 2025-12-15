@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../config.dart';
-import '../utils/token_storage.dart';
-import './auth_service.dart';
+import 'package:mobile_app/api/auth_service.dart';
+import 'package:mobile_app/config.dart';
+import 'package:mobile_app/utils/token_storage.dart';
 
 class ApiClient {
   late final Dio dio;
@@ -22,7 +22,7 @@ class ApiClient {
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           final accessToken = await _storage.read(key: "access_token");
-          if (accessToken != null) {
+          if (accessToken != null && accessToken.isNotEmpty) {
             options.headers["Authorization"] = "Bearer $accessToken";
           }
           handler.next(options);
@@ -33,26 +33,17 @@ class ApiClient {
             final success = await auth.refreshAccessToken();
 
             if (success) {
-              // Retry original request with new access token
               final requestOptions = e.requestOptions;
               final newAccessToken = await _storage.read(key: "access_token");
               requestOptions.headers["Authorization"] =
                   "Bearer $newAccessToken";
 
-              final cloneReq = await dio.request(
-                requestOptions.path,
-                options: Options(
-                  method: requestOptions.method,
-                  headers: requestOptions.headers,
-                  contentType: requestOptions.contentType,
-                ),
-                data: requestOptions.data,
-                queryParameters: requestOptions.queryParameters,
-              );
+              final cloneReq = await dio.fetch(requestOptions);
               return handler.resolve(cloneReq);
             } else {
-              // Refresh failed → user needs to log in again
               await TokenStorage.clearTokens();
+              // Let the calling code know login is required
+              return handler.next(e);
             }
           }
           handler.next(e);
