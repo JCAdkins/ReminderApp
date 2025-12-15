@@ -8,13 +8,17 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
-    password_hash = Column(String, nullable=False)
+    password_hash = Column(String, nullable=True)  # nullable if using OAuth only
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     dob = Column(Date, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    google_id = Column(String, unique=True, nullable=True)
+
     oauth_tokens = relationship(
-    "OAuthToken",
-    back_populates="user",
-    cascade="all, delete"
-)
+        "OAuthToken",
+        back_populates="user",
+        cascade="all, delete",
+        lazy="selectin"
+    )

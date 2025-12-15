@@ -1,9 +1,10 @@
+from time import timezone
 from sqlalchemy import Date
 from sqlalchemy.orm import Session
+from datetime import datetime, timedelta, timezone
 from app.models.user import User
 from app.oauth.password import hash_password, verify_password
-from app.oauth.jwt import create_access_token, create_refresh_token
-
+from app.oauth.jwt import create_access_token, create_refresh_token, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
 
 def register_user(db: Session, email: str, password: str, first_name: str, last_name: str, dob: Date):
     existing = db.query(User).filter(User.email == email).first()
@@ -31,10 +32,22 @@ def authenticate_user(db: Session, email: str, password: str):
 
 
 def generate_tokens(user: User):
-    payload = {"sub": str(user.id), "email": user.email}
+    # expiration for access token
+    access_expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token({"sub": str(user.id), "email": user.email})
+
+    # expiration for refresh token
+    refresh_expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    refresh_token = create_refresh_token({"sub": str(user.id), "email": user.email})
+
+    # expires_in for frontend (seconds until access token expires)
+    expires_in = int((access_expire - datetime.now(timezone.utc)).total_seconds())
+
     return {
-        "access_token": create_access_token(payload),
-        "refresh_token": create_refresh_token(payload)
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "expires_in": expires_in,
+        "token_type": "bearer"
     }
 
 

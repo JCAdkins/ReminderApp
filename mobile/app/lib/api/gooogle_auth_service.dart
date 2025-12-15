@@ -1,15 +1,20 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io' show Platform;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mobile_app/api/api_exception.dart';
+import './auth_service.dart';
 
 class GoogleAuthService {
+  final auth = AuthService();
   late final GoogleSignIn _googleSignIn;
 
   GoogleAuthService() {
     _googleSignIn = GoogleSignIn(
       clientId: _getClientId(),
-      scopes: ['email', 'profile'],
+      serverClientId: kIsWeb ? null : _getClientId(),
+      scopes: ['email', 'profile', 'openid'],
     );
   }
 
@@ -25,18 +30,34 @@ class GoogleAuthService {
     }
   }
 
-  Future<GoogleSignInAccount?> signInWithGoogle() async {
+  Future<bool> signInWithGoogle() async {
     try {
+      GoogleSignInAccount? googleUser;
       if (kIsWeb) {
         // Silent sign-in first
-        var account = await _googleSignIn.signInSilently();
-        if (account != null) return account;
+        googleUser = await _googleSignIn.signInSilently();
+      }
+      googleUser ??= await _googleSignIn.signIn();
+      final googleAuth = await googleUser!.authentication;
+      final idToken = googleAuth.idToken;
+      if (idToken == null) {
+        print('Google Sign-In failed or canceled');
+        return false;
+      }
+      final success = await auth.loginWithGoogle(idToken);
+
+      return success;
+    } on DioException catch (e) {
+      String message = "Login failed";
+      if (e.response != null && e.response?.data != null) {
+        message = e.response?.data['detail'] ?? message;
       }
 
-      return await _googleSignIn.signIn();
-    } catch (e) {
-      print('Google Sign-In error: $e');
-      return null;
+      throw ApiException(message);
+    } catch (e, st) {
+      print("Error: $e");
+      print("Stacktrace: $st");
+      throw ApiException("Unexpected login error");
     }
   }
 

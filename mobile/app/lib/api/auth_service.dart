@@ -48,11 +48,11 @@ class AuthService {
         data: {'id_token': idToken},
       );
 
-      print("data: ${response.data}");
-      final token = response.data['access_token'];
-      if (token == null) return false;
+      if (response.data == null) return false;
 
-      await TokenStorage.saveTokens(accessToken: token, refreshToken: null);
+      await TokenStorage.saveTokens(
+          accessToken: response.data['access_token'],
+          refreshToken: response.data['refresh_token']);
       return true;
     } on DioException catch (e) {
       String message = "Login failed";

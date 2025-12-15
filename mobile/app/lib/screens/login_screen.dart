@@ -89,12 +89,25 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 20),
                       label: const Text("Continue with Google"),
                       onPressed: () async {
-                        final account =
-                            await GoogleAuthService().signInWithGoogle();
-                        if (account != null) {
-                          // Successfully signed in
-                          print("User email: ${account.email}");
-                          // Navigate to home or save token as needed
+                        try {
+                          final success =
+                              await GoogleAuthService().signInWithGoogle();
+
+                          if (!context.mounted) return;
+
+                          if (success) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (_) => HomeScreen()),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text("Invalid credentials")),
+                            );
+                          }
+                        } on ApiException catch (e) {
+                          showErrorSnackBar(context, e.message);
                         }
                       },
                     ),

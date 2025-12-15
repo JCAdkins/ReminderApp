@@ -1,50 +1,45 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from app.models.oauth_token import OAuthToken
-from app.db import get_db
+from app.models.user import User
 
 # ---------- Save or update Google OAuth tokens ----------
-def save_google_tokens(
-    db: Session,
-    user_id: int,
-    access_token: str,
-    refresh_token: str | None = None,
-    expires_in: int | None = None
-) -> OAuthToken:
+def save_google_tokens(db: Session, user: User, tokens: dict, scopes: list):
     """
-    Save Google OAuth tokens for a user.
-    If a token for this user/provider exists, update it.
-    
-    expires_in: seconds until token expires (from Google)
+    db: SQLAlchemy session
+    user: the logged-in User instance
+    tokens: dict with 'access_token', 'refresh_token', 'expires_at' (optional)
+    scopes: list of scopes granted by the user
     """
-    # Calculate expiry datetime
+    token_row = db.query(OAuthToken).filter_by(user_id=user.id, provider="google").first()
+
     expires_at = None
-    if expires_in:
-        expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+    if "expires_in" in tokens:
+        expires_at = datetime.now(timezone.utc) + timedelta(seconds=tokens["expires_in"])
+    elif "expires_at" in tokens:
+        expires_at = tokens["expires_at"]  # already datetime
 
-    # Check if token exists
-    token = db.query(OAuthToken).filter_by(user_id=user_id, provider="google").first()
+    if token_row:
+        # update existing row
+        token_row.access_token = tokens.get("access_token")
+        token_row.refresh_token = tokens.get("refresh_token")
+        token_row.expires_at = expires_at
+        token_row.scopes = scopes
+    else:
+        # create new row
+        token_row = OAuthToken(
+            provider="google",
+            user_id=user.id,
+            access_token=tokens.get("access_token"),
+            refresh_token=tokens.get("refresh_token"),
+            expires_at=expires_at,
+            scopes=scopes,
+        )
+        db.add(token_row)
 
-    if token:
-        token.access_token = access_token
-        token.refresh_token = refresh_token
-        token.expires_at = expires_at
-        db.commit()
-        db.refresh(token)
-        return token
-
-    # Create new token
-    token = OAuthToken(
-        provider="google",
-        user_id=user_id,
-        access_token=access_token,
-        refresh_token=refresh_token,
-        expires_at=expires_at
-    )
-    db.add(token)
     db.commit()
-    db.refresh(token)
-    return token
+    db.refresh(token_row)
+    return token_row
 
 
 # ---------- Retrieve Google OAuth tokens ----------

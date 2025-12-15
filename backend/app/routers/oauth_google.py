@@ -1,34 +1,80 @@
 import datetime
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.services.oauth_google_service import save_google_tokens, get_google_tokens
 from app.db import get_db
 from app.schemas.oauth_token import OAuthTokenCreate   # ✅ Use Pydantic schema
 from app.oauth.require_access_token import require_access_token
+from app.models.user import User
+from app.services.auth_service import generate_tokens
+from app.utils.google_helpers import verify_google_id_token
 
 
-router = APIRouter(prefix="/oauth/google", tags=["Google OAuth"])
+router = APIRouter(prefix="/auth/google", tags=["Google OAuth"])
 
-@router.post("/store")
-def store_google_tokens(
-    data: OAuthTokenCreate,
-    payload=Depends(require_access_token),
-    db: Session = Depends(get_db)
-):
-    expires_in = None
-    if data.expires_at:
-        expires_in = (data.expires_at - datetime.datetime.utcnow()).total_seconds()
+@router.post("")
+def google_login(payload: dict, db: Session = Depends(get_db)):
+    print("payload: ", payload)
+    id_token_str = payload.get("id_token")
+    if not id_token_str:
+        raise HTTPException(status_code=400, detail="id_token required")
 
-    token = save_google_tokens(
-        db=db,
-        user_id=int(payload["sub"]),
-        access_token=data.access_token,
-        refresh_token=data.refresh_token,
-        expires_in=expires_in,
-    )
+    google_user = verify_google_id_token(id_token_str)
 
-    return {"status": "stored", "expires_at": token.expires_at}
+    email = google_user.get("email")
+    google_id = google_user.get("sub")
+
+    print("google_user: ", google_user)
+
+    user = db.query(User).filter(
+        (User.email == email) | (User.google_id == google_id)
+    ).first()
+
+    print("user: ", user)
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not registered"
+        )
+    
+        # update google_id in user if not set
+    if not user.google_id:
+        user.google_id = google_id
+        db.commit()
+        db.refresh(user)
+
+    tokens = generate_tokens(user)
+    scopes = ["email", "profile", "openid"]
+    print("tokens: ", tokens)
+    save_google_tokens(db, user, tokens, scopes)
+
+    return {
+        "access_token": tokens["access_token"],
+        "refresh_token": tokens["refresh_token"],
+        "token_type": "bearer"
+    }
+
+# @router.post("/store")
+# def store_google_tokens(
+#     data: OAuthTokenCreate,
+#     payload=Depends(require_access_token),
+#     db: Session = Depends(get_db)
+# ):
+#     expires_in = None
+#     if data.expires_at:
+#         expires_in = (data.expires_at - datetime.datetime.utcnow()).total_seconds()
+
+#     token = save_google_tokens(
+#         db=db,
+#         user_id=int(payload["sub"]),
+#         access_token=data.access_token,
+#         refresh_token=data.refresh_token,
+#         expires_in=expires_in,
+#     )
+
+#     return {"status": "stored", "expires_at": token.expires_at}
 
 
 @router.get("/get")
