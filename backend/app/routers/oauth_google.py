@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import null
 from sqlalchemy.orm import Session
 
 from app.services.oauth_google_service import save_google_tokens, get_google_tokens
@@ -9,16 +8,15 @@ from app.oauth.require_access_token import require_access_token
 from app.models.user import User
 from app.services.auth_service import generate_tokens
 from app.utils.google_helpers import verify_google_access_token, verify_google_id_token
+from app.schemas.google_mobile_login import GoogleMobileLogin
+from app.schemas.google_web_login import GoogleWebLogin
 
 
 router = APIRouter(prefix="/auth/google", tags=["Google OAuth"])
 
 @router.post("/mobile")
-def google_login(payload: dict, db: Session = Depends(get_db)):
-    print("payload: ", payload)
-    id_token_str = payload.get("id_token")
-    if not id_token_str:
-        raise HTTPException(status_code=400, detail="id_token required")
+def google_login(payload: GoogleMobileLogin, db: Session = Depends(get_db)):
+    id_token_str = payload.id_token
 
     google_user = verify_google_id_token(id_token_str)
 
@@ -57,13 +55,10 @@ def google_login(payload: dict, db: Session = Depends(get_db)):
     }
 
 @router.post("/web")
-def google_web_login(payload: dict, db: Session = Depends(get_db)):
-    email = payload.get("email")
-    google_id = payload.get("google_id")
-    access_token = payload.get("access_token")
-
-    if not email or not google_id or not access_token:
-        raise HTTPException(status_code=400, detail="Missing required fields")
+def google_web_login(payload: GoogleWebLogin, db: Session = Depends(get_db)):
+    email = payload.email
+    google_id = payload.google_id
+    access_token = payload.access_token
 
     # Verify token with Google
     token_info = verify_google_access_token(access_token)
