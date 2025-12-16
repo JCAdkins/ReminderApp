@@ -2,9 +2,10 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from app.models.oauth_token import OAuthToken
 from app.models.user import User
+from app.schemas.oauth_token import OAuthTokenCreate
 
 # ---------- Save or update Google OAuth tokens ----------
-def save_google_tokens(db: Session, user: User, tokens: dict, scopes: list):
+def save_google_tokens(db: Session, user: User, tokens: OAuthTokenCreate, scopes: list):
     """
     db: SQLAlchemy session
     user: the logged-in User instance
@@ -21,8 +22,8 @@ def save_google_tokens(db: Session, user: User, tokens: dict, scopes: list):
 
     if token_row:
         # update existing row
-        token_row.access_token = tokens.get("access_token")
-        token_row.refresh_token = tokens.get("refresh_token")
+        token_row.access_token = tokens.access_token
+        token_row.refresh_token = tokens.refresh_token
         token_row.expires_at = expires_at
         token_row.scopes = scopes
     else:

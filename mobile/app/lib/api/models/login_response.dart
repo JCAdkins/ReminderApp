@@ -5,7 +5,7 @@ class LoginResponse {
 
   LoginResponse({
     required this.accessToken,
-    this.refreshToken,
+    required this.refreshToken,
     required this.tokenType,
   });
 

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:mobile_app/api/api_exception.dart';
 import 'package:mobile_app/utils/token_storage.dart';
+
 import 'api_client.dart';
 import 'models/login_request.dart';
 import 'models/register_request.dart';
@@ -8,11 +9,14 @@ import 'models/login_response.dart';
 import 'models/user.dart';
 
 class AuthService {
-  final ApiClient api = ApiClient();
+  // 🔐 Main API client (WITH interceptors)
+  final ApiClient api;
 
-  // --------------------
-  // LOGIN
-  // --------------------
+  AuthService([ApiClient? api]) : api = api ?? ApiClient();
+
+  // ============================
+  // LOGIN (EMAIL + PASSWORD)
+  // ============================
   Future<bool> login(LoginRequest request) async {
     try {
       final res = await api.dio.post(
@@ -22,7 +26,6 @@ class AuthService {
 
       final loginRes = LoginResponse.fromJson(res.data);
 
-      // Save tokens using TokenStorage class
       await TokenStorage.saveTokens(
         accessToken: loginRes.accessToken,
         refreshToken: loginRes.refreshToken,
@@ -30,17 +33,17 @@ class AuthService {
 
       return true;
     } on DioException catch (e) {
-      String message = "Login failed";
-      if (e.response != null && e.response?.data != null) {
-        message = e.response?.data['detail'] ?? message;
-      }
-
-      throw ApiException(message);
-    } catch (e) {
+      throw ApiException(
+        e.response?.data?['detail'] ?? "Login failed",
+      );
+    } catch (_) {
       throw ApiException("Unexpected login error");
     }
   }
 
+  // ============================
+  // GOOGLE LOGIN (MOBILE)
+  // ============================
   Future<bool> loginWithGoogle(String idToken) async {
     try {
       final response = await api.dio.post(
@@ -51,107 +54,84 @@ class AuthService {
       if (response.data == null) return false;
 
       await TokenStorage.saveTokens(
-          accessToken: response.data['access_token'],
-          refreshToken: response.data['refresh_token']);
+        accessToken: response.data['access_token'],
+        refreshToken: response.data['refresh_token'],
+      );
+
       return true;
     } on DioException catch (e) {
-      String message = "Login failed";
-      if (e.response != null && e.response?.data != null) {
-        message = e.response?.data['detail'] ?? message;
-      }
-
-      throw ApiException(message);
-    } catch (e) {
-      throw ApiException("Unexpected login error");
+      throw ApiException(
+        e.response?.data?['detail'] ?? "Google login failed",
+      );
+    } catch (_) {
+      throw ApiException("Unexpected Google login error");
     }
   }
 
+  // ============================
+  // GOOGLE LOGIN (WEB)
+  // ============================
   Future<bool> loginWithGoogleWeb(
-      String email, String id, String accessToken) async {
+    String email,
+    String googleId,
+    String accessToken,
+  ) async {
     try {
       final response = await api.dio.post(
         '/auth/google/web',
-        data: {'email': email, "google_id": id, "access_token": accessToken},
+        data: {
+          'email': email,
+          'google_id': googleId,
+          'access_token': accessToken,
+        },
       );
 
       if (response.data == null) return false;
 
       await TokenStorage.saveTokens(
-          accessToken: response.data['access_token'],
-          refreshToken: response.data['refresh_token']);
+        accessToken: response.data['access_token'],
+        refreshToken: response.data['refresh_token'],
+      );
+
       return true;
     } on DioException catch (e) {
-      String message = "Login failed";
-      if (e.response != null && e.response?.data != null) {
-        message = e.response?.data['detail'] ?? message;
-      }
-
-      throw ApiException(message);
-    } catch (e) {
-      throw ApiException("Unexpected login error");
+      throw ApiException(
+        e.response?.data?['detail'] ?? "Google login failed",
+      );
+    } catch (_) {
+      throw ApiException("Unexpected Google login error");
     }
   }
 
-  // Auto-login
+  // ============================
+  // AUTO LOGIN
+  // ============================
   Future<bool> tryAutoLogin() async {
     try {
-      // 1️⃣ Check access token
-      final res = await api.dio.get("/auth/me");
-      print("res in auth_service line 100: $res");
+      await api.dio.get("/auth/me");
       return true;
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
-        // 2️⃣ Try refresh
         return await refreshAccessToken();
       }
       return false;
     }
   }
 
-  // --------------------
-  // REGISTER
-  // --------------------
-  Future<bool> register(RegisterRequest request) async {
-    try {
-      final res = await api.dio.post(
-        "/auth/register",
-        data: request.toJson(),
-      );
-
-      final regRes = LoginResponse.fromJson(res.data);
-
-      // Save tokens
-      await TokenStorage.saveTokens(
-        accessToken: regRes.accessToken,
-        refreshToken: regRes.refreshToken,
-      );
-
-      return true;
-    } on DioException catch (e) {
-      String message = "Registration failed";
-      if (e.response != null && e.response?.data != null) {
-        message = e.response?.data['detail'] ?? message;
-      }
-      throw ApiException(message);
-    } catch (e) {
-      throw ApiException("Unexpected registration error");
-    }
-  }
-
-  // --------------------
-  // REFRESH ACCESS TOKENS
-  // --------------------
+  // ============================
+  // REFRESH ACCESS TOKEN
+  // ============================
   Future<bool> refreshAccessToken() async {
     final refreshToken = await TokenStorage.getRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) return false;
 
     try {
-      final response = await api.dio.post(
-        '/auth/refresh',
-        data: {'refresh_token': refreshToken},
+      final res = await api.refreshDio.post(
+        "/auth/refresh",
+        data: {"refresh_token": refreshToken},
       );
 
-      final loginRes = LoginResponse.fromJson(response.data);
+      final loginRes = LoginResponse.fromJson(res.data);
 
       await TokenStorage.saveTokens(
         accessToken: loginRes.accessToken,
@@ -159,24 +139,50 @@ class AuthService {
       );
 
       return true;
-    } catch (e) {
-      // Could not refresh, maybe refresh token expired
+    } catch (_) {
       await TokenStorage.clearTokens();
       return false;
     }
   }
 
-  // --------------------
-  // GET ME
-  // --------------------
+  // ============================
+  // GET CURRENT USER
+  // ============================
   Future<User> getMe() async {
     final res = await api.dio.get("/auth/me");
     return User.fromJson(res.data);
   }
 
-  // --------------------
+  // ============================
+  // REGISTER
+  // ============================
+  Future<bool> register(RegisterRequest request) async {
+    try {
+      final res = await api.dio.post(
+        "/auth/register",
+        data: request.toJson(),
+      );
+
+      final loginRes = LoginResponse.fromJson(res.data);
+
+      await TokenStorage.saveTokens(
+        accessToken: loginRes.accessToken,
+        refreshToken: loginRes.refreshToken,
+      );
+
+      return true;
+    } on DioException catch (e) {
+      throw ApiException(
+        e.response?.data?['detail'] ?? "Registration failed",
+      );
+    } catch (_) {
+      throw ApiException("Unexpected registration error");
+    }
+  }
+
+  // ============================
   // LOGOUT
-  // --------------------
+  // ============================
   Future<void> logout() async {
     await TokenStorage.clearTokens();
   }

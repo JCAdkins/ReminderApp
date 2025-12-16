@@ -1,9 +1,9 @@
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.services.oauth_google_service import save_google_tokens, get_google_tokens
 from app.db import get_db
-from app.schemas.oauth_token import OAuthTokenCreate   # ✅ Use Pydantic schema
 from app.oauth.require_access_token import require_access_token
 from app.models.user import User
 from app.services.auth_service import generate_tokens
@@ -17,7 +17,6 @@ router = APIRouter(prefix="/auth/google", tags=["Google OAuth"])
 @router.post("/mobile")
 def google_login(payload: GoogleMobileLogin, db: Session = Depends(get_db)):
     id_token_str = payload.id_token
-
     google_user = verify_google_id_token(id_token_str)
 
     email = google_user.get("email")
@@ -49,9 +48,10 @@ def google_login(payload: GoogleMobileLogin, db: Session = Depends(get_db)):
     save_google_tokens(db, user, tokens, scopes)
 
     return {
-        "access_token": tokens["access_token"],
-        "refresh_token": tokens["refresh_token"],
-        "token_type": "bearer"
+        "access_token": tokens.access_token,
+        "refresh_token": tokens.refresh_token,
+        "token_type": "bearer",
+        "expires_at": tokens.expires_at
     }
 
 @router.post("/web")
@@ -94,9 +94,10 @@ def google_web_login(payload: GoogleWebLogin, db: Session = Depends(get_db)):
     tokens = generate_tokens(user)
 
     return {
-        "access_token": tokens["access_token"],
-        "refresh_token": tokens["refresh_token"],
-        "token_type": "bearer",
+        "access_token": tokens.access_token,
+        "refresh_token": tokens.refresh_token,
+        "token_type": "Bearer",
+        "expires_at": tokens.expires_at
     }
 
 
@@ -112,5 +113,6 @@ def fetch_tokens(
     return {
         "access_token": token.access_token,
         "refresh_token": token.refresh_token,
+        "token_type": "Bearer",
         "expires_at": token.expires_at
     }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:mobile_app/api/gooogle_auth_service.dart';
+import '../api/google_auth_service.dart';
 import '../api/auth_service.dart';
 import '../api/models/login_request.dart';
 import '../api/api_exception.dart';

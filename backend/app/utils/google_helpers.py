@@ -1,5 +1,6 @@
 import os
 import requests
+from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 from fastapi import HTTPException, status
 
@@ -16,9 +17,10 @@ GOOGLE_CLIENT_IDS = {cid for cid in GOOGLE_CLIENT_IDS if cid}
 
 def verify_google_id_token(token: str) -> dict:
     try:
+        request = Request()
         idinfo = id_token.verify_oauth2_token(
             token,
-            requests.Request(),
+            request,
             audience=None  # we will validate manually
         )
 
