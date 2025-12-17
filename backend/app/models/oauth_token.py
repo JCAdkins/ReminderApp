@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db import Base
 
-class OAuthToken(Base):
+class OAuthTokenDb(Base):
     __tablename__ = "oauth_tokens"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -38,4 +38,8 @@ class OAuthToken(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "provider", name="uq_user_provider"),
     )
+
+    model_config = {
+        "from_attributes": True  # <-- allows conversion from ORM objects
+    }
 

@@ -3,19 +3,25 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobile_app/config.dart';
 import 'package:mobile_app/utils/token_storage.dart';
 import 'auth_service.dart';
+import '../auth/auth_state.dart';
 
 class ApiClient {
-  // 🔒 Singleton
-  static final ApiClient _instance = ApiClient._internal();
-  factory ApiClient() => _instance;
+  // Singleton
+  static ApiClient? _instance;
+  factory ApiClient({required AuthState authState}) {
+    _instance ??= ApiClient._internal(authState);
+    return _instance!;
+  }
+
+  final AuthState authState;
 
   late final Dio dio;
   late final Dio refreshDio;
 
   static const _storage = FlutterSecureStorage();
 
-  ApiClient._internal() {
-    // 🔐 Main Dio (WITH interceptors)
+  ApiClient._internal(this.authState) {
+    // Main Dio (WITH interceptors)
     dio = Dio(
       BaseOptions(
         baseUrl: Config.apiBaseUrl,
@@ -25,7 +31,7 @@ class ApiClient {
       ),
     );
 
-    // 🔁 Refresh Dio (NO interceptors)
+    // Refresh Dio (NO interceptors)
     refreshDio = Dio(
       BaseOptions(
         baseUrl: Config.apiBaseUrl,
@@ -71,7 +77,7 @@ class ApiClient {
         e.requestOptions.extra["retried"] != true) {
       e.requestOptions.extra["retried"] = true;
 
-      final authService = AuthService(this);
+      final authService = AuthService(authState: authState, api: this);
       final success = await authService.refreshAccessToken();
 
       if (success) {
@@ -84,6 +90,7 @@ class ApiClient {
 
       // Refresh failed → logout
       await TokenStorage.clearTokens();
+      authState.clear();
     }
 
     handler.next(e);

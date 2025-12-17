@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from datetime import datetime
-from app.models.oauth_token import OAuthToken
+from app.models.oauth_token import OAuthTokenDb
 
 
 def save_oauth_tokens(
@@ -12,7 +12,7 @@ def save_oauth_tokens(
     expires_at: datetime | None
 ):
     # Upsert: if existing token for provider, update it
-    existing = db.query(OAuthToken).filter_by(
+    existing = db.query(OAuthTokenDb).filter_by(
         user_id=user_id,
         provider=provider
     ).first()
@@ -25,7 +25,7 @@ def save_oauth_tokens(
         db.refresh(existing)
         return existing
 
-    token = OAuthToken(
+    token = OAuthTokenDb(
         provider=provider,
         user_id=user_id,
         access_token=access_token,
@@ -39,7 +39,7 @@ def save_oauth_tokens(
 
 
 def get_oauth_tokens(db: Session, user_id: int, provider: str):
-    return db.query(OAuthToken).filter_by(
+    return db.query(OAuthTokenDb).filter_by(
         user_id=user_id,
         provider=provider
     ).first()

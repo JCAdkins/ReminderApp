@@ -2,6 +2,7 @@ from sqlalchemy import Column, Date, Integer, String, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.db import Base
+from app.models.oauth_token import OAuthTokenDb
 
 class User(Base):
     __tablename__ = "users"
@@ -17,8 +18,12 @@ class User(Base):
     google_id = Column(String, unique=True, nullable=True)
 
     oauth_tokens = relationship(
-        "OAuthToken",
+        "OAuthTokenDb",
         back_populates="user",
         cascade="all, delete",
         lazy="selectin"
     )
+
+    model_config = {
+        "from_attributes": True  # <-- allows conversion from ORM objects
+    }

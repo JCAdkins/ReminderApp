@@ -4,12 +4,13 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from app.db import get_db
 from app.services.auth_service import (
-    register_user, authenticate_user, generate_tokens, refresh_tokens
+    get_user, register_user, authenticate_user, generate_tokens, refresh_tokens
 )
 from app.oauth.jwt import verify_token
 from app.dependencies import get_current_user
 from app.schemas.user_response import UserResponse
 from app.models.user import User
+from app.schemas.auth_response import AuthResponse
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -37,7 +38,17 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
     user = register_user(db, data.email, data.password, data.first_name, data.last_name, data.dob)
     if not user:
         raise HTTPException(400, "Email already registered")
-    return generate_tokens(user)
+    user_response = UserResponse.model_validate({
+    "id": user.id,
+    "email": user.email,
+    "first_name": user.first_name,
+    "last_name": user.last_name,
+    "dob": user.dob,
+    })
+    return AuthResponse(
+        tokens = generate_tokens(user),
+        user = user_response
+    )
 
 
 @router.post("/login")
@@ -45,7 +56,17 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     user = authenticate_user(db, data.email, data.password)
     if not user:
         raise HTTPException(400, "Invalid credentials")
-    return generate_tokens(user)
+    user_response = UserResponse.model_validate({
+    "id": user.id,
+    "email": user.email,
+    "first_name": user.first_name,
+    "last_name": user.last_name,
+    "dob": user.dob,
+    })
+    return AuthResponse(
+        tokens = generate_tokens(user),
+        user = user_response
+    )
 
 
 @router.post("/refresh")
@@ -54,8 +75,22 @@ def refresh(data: RefreshRequest):
     if not payload:
         raise HTTPException(401, "Invalid refresh token")
 
-    return refresh_tokens(payload["sub"], payload["email"])
+    tokens = refresh_tokens(payload["sub"], payload["email"])
+    user = get_user(payload["email"])
+    user_response = UserResponse.model_validate({
+    "id": user.id,
+    "email": user.email,
+    "first_name": user.first_name,
+    "last_name": user.last_name,
+    "dob": user.dob,
+    })
+    return AuthResponse(
+        tokens = tokens,
+        user = user_response
+    )
 
-@router.get("/me", response_model=UserResponse)
-async def me(current_user: User = Depends(get_current_user)):
+
+@router.get("/me", response_model=AuthResponse)
+async def me(current_user: AuthResponse = Depends(get_current_user)):
+
     return current_user

@@ -4,13 +4,15 @@ import 'dart:io' show Platform;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_app/api/api_exception.dart';
-import './auth_service.dart';
+import 'package:mobile_app/api/auth_service.dart';
+import 'package:mobile_app/auth/auth_state.dart';
 
 class GoogleAuthService {
-  final auth = AuthService();
+  final AuthService auth;
   late final GoogleSignIn _googleSignIn;
 
-  GoogleAuthService() {
+  GoogleAuthService({required AuthState authState})
+      : auth = AuthService(authState: authState) {
     _googleSignIn = GoogleSignIn(
       clientId: _getClientId(),
       serverClientId: kIsWeb ? null : _getClientId(),
@@ -30,7 +32,7 @@ class GoogleAuthService {
     }
   }
 
-  Future<bool> signInWithGoogle() async {
+  Future<void> signInWithGoogle() async {
     try {
       GoogleSignInAccount? googleUser;
       if (kIsWeb) {
@@ -39,22 +41,19 @@ class GoogleAuthService {
         googleUser ??= await _googleSignIn.signIn();
         final googleAuth = await googleUser!.authentication;
         if (googleAuth.accessToken == null) {
-          return false;
+          return;
         }
-        final success = await auth.loginWithGoogleWeb(
+        await auth.loginWithGoogleWeb(
             googleUser.email, googleUser.id, googleAuth.accessToken!);
-        return success;
       } else {
         googleUser ??= await _googleSignIn.signIn();
         final googleAuth = await googleUser!.authentication;
         final idToken = googleAuth.idToken;
         if (idToken == null) {
           print('Google Sign-In failed or canceled');
-          return false;
+          return;
         }
-        final success = await auth.loginWithGoogle(idToken);
-
-        return success;
+        await auth.loginWithGoogle(idToken);
       }
     } on DioException catch (e) {
       String message = "Login failed";
@@ -74,6 +73,7 @@ class GoogleAuthService {
     await _googleSignIn.signOut();
   }
 
+  /// *** DOES NOT SET SESSION USER*** IMPLEMENT THAT IF USING THIS METHOD
   /// Get the current signed-in user (if any)
   Future<GoogleSignInAccount?> getCurrentUser() async {
     if (kIsWeb) {

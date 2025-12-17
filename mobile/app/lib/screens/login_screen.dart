@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart' show Provider;
 import '../api/google_auth_service.dart';
 import '../api/auth_service.dart';
 import '../api/models/login_request.dart';
@@ -21,10 +22,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final emailCtrl = TextEditingController();
   final passCtrl = TextEditingController();
-  final auth = AuthService();
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthService>(context, listen: false);
+
     return Scaffold(
       appBar: AppBar(title: const Text("Login")),
       body: SingleChildScrollView(
@@ -58,11 +60,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           );
 
                           try {
-                            final success = await auth.login(request);
+                            await auth.login(request);
 
                             if (!context.mounted) return;
 
-                            if (success) {
+                            if (auth.authState.user != null) {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(builder: (_) => HomeScreen()),
@@ -90,12 +92,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       label: const Text("Continue with Google"),
                       onPressed: () async {
                         try {
-                          final success =
-                              await GoogleAuthService().signInWithGoogle();
+                          await GoogleAuthService(authState: auth.authState)
+                              .signInWithGoogle();
 
                           if (!context.mounted) return;
 
-                          if (success) {
+                          if (auth.authState.user != null) {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(builder: (_) => HomeScreen()),

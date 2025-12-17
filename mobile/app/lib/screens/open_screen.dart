@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../utils/token_storage.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
@@ -13,10 +14,9 @@ class OpenScreen extends StatefulWidget {
 }
 
 class _OpenScreenState extends State<OpenScreen> {
-  final auth = AuthService();
-
   @override
   void initState() {
+    final auth = Provider.of<AuthService>(context, listen: false);
     super.initState();
 
     void checkLogin() async {
@@ -31,9 +31,9 @@ class _OpenScreenState extends State<OpenScreen> {
       }
 
       // Try auto-login with either token
-      final success = await auth.tryAutoLogin();
+      await auth.tryAutoLogin();
 
-      if (success) {
+      if (auth.authState.user != null) {
         _goToHome();
       }
     }

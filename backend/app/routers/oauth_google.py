@@ -1,15 +1,15 @@
-from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.services.oauth_google_service import save_google_tokens, get_google_tokens
 from app.db import get_db
-from app.oauth.require_access_token import require_access_token
 from app.models.user import User
 from app.services.auth_service import generate_tokens
 from app.utils.google_helpers import verify_google_access_token, verify_google_id_token
 from app.schemas.google_mobile_login import GoogleMobileLogin
 from app.schemas.google_web_login import GoogleWebLogin
+from app.schemas.auth_response import AuthResponse
+from app.schemas.user_response import UserResponse
 
 
 router = APIRouter(prefix="/auth/google", tags=["Google OAuth"])
@@ -44,15 +44,19 @@ def google_login(payload: GoogleMobileLogin, db: Session = Depends(get_db)):
 
     tokens = generate_tokens(user)
     scopes = ["email", "profile", "openid"]
-    print("tokens: ", tokens)
     save_google_tokens(db, user, tokens, scopes)
 
-    return {
-        "access_token": tokens.access_token,
-        "refresh_token": tokens.refresh_token,
-        "token_type": "bearer",
-        "expires_at": tokens.expires_at
-    }
+    user_response = UserResponse.model_validate({
+    "id": user.id,
+    "email": user.email,
+    "first_name": user.first_name,
+    "last_name": user.last_name,
+    "dob": user.dob,
+    })
+    return AuthResponse(
+        tokens = tokens,
+        user = user_response
+    )
 
 @router.post("/web")
 def google_web_login(payload: GoogleWebLogin, db: Session = Depends(get_db)):
@@ -92,13 +96,20 @@ def google_web_login(payload: GoogleWebLogin, db: Session = Depends(get_db)):
 
     # 4Issue backend tokens
     tokens = generate_tokens(user)
+    scopes = ["email", "profile", "openid"]
+    save_google_tokens(db, user, tokens, scopes)
 
-    return {
-        "access_token": tokens.access_token,
-        "refresh_token": tokens.refresh_token,
-        "token_type": "Bearer",
-        "expires_at": tokens.expires_at
-    }
+    user_response = UserResponse.model_validate({
+    "id": user.id,
+    "email": user.email,
+    "first_name": user.first_name,
+    "last_name": user.last_name,
+    "dob": user.dob,
+    })
+    return AuthResponse(
+        tokens = tokens,
+        user = user_response
+    )
 
 
 @router.get("/get")

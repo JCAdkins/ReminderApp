@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/form_fields/name_field.dart';
 import '../widgets/form_fields/email_field.dart';
 import '../widgets/form_fields/password_field.dart';
@@ -25,8 +26,6 @@ class RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _dobController = TextEditingController();
 
-  final AuthService _authService = AuthService();
-
   bool _isLoading = false;
 
   Future<void> _submit() async {
@@ -35,7 +34,7 @@ class RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     final dobText = _dobController.text.trim();
-    final parts = dobText.split('-');
+    final parts = dobText.split('/');
 
     final dob = DateTime(
       int.parse(parts[2]), // year
@@ -51,28 +50,30 @@ class RegisterScreenState extends State<RegisterScreen> {
       dob: dob,
     );
 
-    bool? success;
+    // Get the AuthService from Provider
+    final authService = Provider.of<AuthService>(context, listen: false);
+
     String? errorMessage;
 
     try {
-      success = await _authService.register(request);
+      // Now register() returns an AuthResponse and updates AuthState internally
+      await authService.register(request);
+
+      // Check if user is set in AuthState
+      final user = authService.authState.user;
+      if (user != null) {
+        _onRegisterSuccess();
+      } else {
+        _onRegisterError("Registration failed. Please try again.");
+      }
     } on ApiException catch (e) {
       errorMessage = "Registration failed: ${e.message}";
+      _onRegisterError(errorMessage);
     } catch (e) {
       errorMessage = "Registration failed: ${e.toString()}";
-    }
-
-    // 🔐 IMPORTANT: Guard all UI work
-    if (!mounted) return;
-
-    setState(() => _isLoading = false);
-
-    if (success == true) {
-      _onRegisterSuccess();
-    } else {
-      _onRegisterError(
-        errorMessage ?? "Registration failed. Email may already be in use.",
-      );
+      _onRegisterError(errorMessage);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -112,7 +113,6 @@ class RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 16),
                     PasswordField(controller: _passwordController),
                     const SizedBox(height: 16),
-                    // Updated DOB field with custom picker
                     DOBField(controller: _dobController),
                     const SizedBox(height: 32),
                     _isLoading

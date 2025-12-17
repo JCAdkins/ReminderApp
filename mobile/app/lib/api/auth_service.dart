@@ -5,33 +5,38 @@ import 'package:mobile_app/utils/token_storage.dart';
 import 'api_client.dart';
 import 'models/login_request.dart';
 import 'models/register_request.dart';
-import 'models/login_response.dart';
+import 'models/auth_response.dart';
 import 'models/user.dart';
+import '../auth/auth_state.dart';
 
 class AuthService {
   // 🔐 Main API client (WITH interceptors)
   final ApiClient api;
+  final AuthState authState;
 
-  AuthService([ApiClient? api]) : api = api ?? ApiClient();
+  AuthService({
+    ApiClient? api,
+    required this.authState,
+  }) : api = api ?? ApiClient(authState: authState);
 
   // ============================
   // LOGIN (EMAIL + PASSWORD)
   // ============================
-  Future<bool> login(LoginRequest request) async {
+  Future<void> login(LoginRequest request) async {
     try {
       final res = await api.dio.post(
         "/auth/login",
         data: request.toJson(),
       );
 
-      final loginRes = LoginResponse.fromJson(res.data);
+      final authRes = AuthResponse.fromJson(res.data);
 
       await TokenStorage.saveTokens(
-        accessToken: loginRes.accessToken,
-        refreshToken: loginRes.refreshToken,
+        accessToken: authRes.tokens.accessToken,
+        refreshToken: authRes.tokens.refreshToken,
       );
 
-      return true;
+      authState.setSession(authRes);
     } on DioException catch (e) {
       throw ApiException(
         e.response?.data?['detail'] ?? "Login failed",
@@ -44,21 +49,21 @@ class AuthService {
   // ============================
   // GOOGLE LOGIN (MOBILE)
   // ============================
-  Future<bool> loginWithGoogle(String idToken) async {
+  Future<void> loginWithGoogle(String idToken) async {
     try {
-      final response = await api.dio.post(
+      final res = await api.dio.post(
         '/auth/google/mobile',
         data: {'id_token': idToken},
       );
 
-      if (response.data == null) return false;
+      final authRes = AuthResponse.fromJson(res.data);
 
       await TokenStorage.saveTokens(
-        accessToken: response.data['access_token'],
-        refreshToken: response.data['refresh_token'],
+        accessToken: authRes.tokens.accessToken,
+        refreshToken: authRes.tokens.refreshToken,
       );
 
-      return true;
+      authState.setSession(authRes);
     } on DioException catch (e) {
       throw ApiException(
         e.response?.data?['detail'] ?? "Google login failed",
@@ -71,13 +76,13 @@ class AuthService {
   // ============================
   // GOOGLE LOGIN (WEB)
   // ============================
-  Future<bool> loginWithGoogleWeb(
+  Future<void> loginWithGoogleWeb(
     String email,
     String googleId,
     String accessToken,
   ) async {
     try {
-      final response = await api.dio.post(
+      final res = await api.dio.post(
         '/auth/google/web',
         data: {
           'email': email,
@@ -86,14 +91,14 @@ class AuthService {
         },
       );
 
-      if (response.data == null) return false;
+      final authRes = AuthResponse.fromJson(res.data);
 
       await TokenStorage.saveTokens(
-        accessToken: response.data['access_token'],
-        refreshToken: response.data['refresh_token'],
+        accessToken: authRes.tokens.accessToken,
+        refreshToken: authRes.tokens.refreshToken,
       );
 
-      return true;
+      authState.setSession(authRes);
     } on DioException catch (e) {
       throw ApiException(
         e.response?.data?['detail'] ?? "Google login failed",
@@ -106,15 +111,26 @@ class AuthService {
   // ============================
   // AUTO LOGIN
   // ============================
-  Future<bool> tryAutoLogin() async {
+  Future<void> tryAutoLogin() async {
     try {
-      await api.dio.get("/auth/me");
-      return true;
+      final res = await api.dio.get("/auth/me");
+      final authRes = AuthResponse.fromJson(res.data);
+      await TokenStorage.saveTokens(
+        accessToken: authRes.tokens.accessToken,
+        refreshToken: authRes.tokens.refreshToken,
+      );
+      authState.setSession(authRes);
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
-        return await refreshAccessToken();
+        await refreshAccessToken();
+        final res = await api.dio.get("/auth/me");
+        final authRes = AuthResponse.fromJson(res.data);
+        authState.setSession(authRes);
       }
-      return false;
+    } catch (e, st) {
+      print("Error: $e"); // prints the error
+      print("Stacktrace: $st"); // optional: prints the stack trace
+      throw ApiException(e.toString());
     }
   }
 
@@ -131,16 +147,18 @@ class AuthService {
         data: {"refresh_token": refreshToken},
       );
 
-      final loginRes = LoginResponse.fromJson(res.data);
+      final authRes = AuthResponse.fromJson(res.data);
 
       await TokenStorage.saveTokens(
-        accessToken: loginRes.accessToken,
-        refreshToken: loginRes.refreshToken,
+        accessToken: authRes.tokens.accessToken,
+        refreshToken: authRes.tokens.refreshToken,
       );
 
+      authState.setSession(authRes); // ✅ update AuthState
       return true;
     } catch (_) {
       await TokenStorage.clearTokens();
+      authState.clear(); // ✅ clear AuthState
       return false;
     }
   }
@@ -156,21 +174,21 @@ class AuthService {
   // ============================
   // REGISTER
   // ============================
-  Future<bool> register(RegisterRequest request) async {
+  Future<void> register(RegisterRequest request) async {
     try {
       final res = await api.dio.post(
         "/auth/register",
         data: request.toJson(),
       );
 
-      final loginRes = LoginResponse.fromJson(res.data);
+      final authRes = AuthResponse.fromJson(res.data);
 
       await TokenStorage.saveTokens(
-        accessToken: loginRes.accessToken,
-        refreshToken: loginRes.refreshToken,
+        accessToken: authRes.tokens.accessToken,
+        refreshToken: authRes.tokens.refreshToken,
       );
 
-      return true;
+      authState.setSession(authRes);
     } on DioException catch (e) {
       throw ApiException(
         e.response?.data?['detail'] ?? "Registration failed",
@@ -185,5 +203,6 @@ class AuthService {
   // ============================
   Future<void> logout() async {
     await TokenStorage.clearTokens();
+    authState.clear();
   }
 }

@@ -11,6 +11,8 @@ dependencies:
   flutter:
     sdk: flutter
 
+  provider: ^6.0.6 # or latest version
+
   # State management
   flutter_riverpod: ^2.5.0
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../api/auth_service.dart';
 import './open_screen.dart';
 import '../widgets/blurred_panel.dart';
@@ -14,7 +15,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final auth = AuthService();
   final PageController _pageController = PageController(viewportFraction: 1.1);
 
   DateTime _focusedDay = DateTime.now();
@@ -28,6 +28,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthService>(context, listen: false);
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -124,11 +126,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       pages: [
                         BlurredPanel(
                           outerPadding: const EdgeInsets.all(12),
-                          child: const Center(
+                          child: Center(
                             child: Text(
                               "No reminders yet.\nTap the + button to add one!",
                               textAlign: TextAlign.center,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 18,
                                 color: Colors.white,
                                 fontWeight: FontWeight.w300,

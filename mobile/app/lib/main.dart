@@ -1,11 +1,33 @@
 import 'package:flutter/material.dart';
-import 'screens/open_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
+
+import 'screens/open_screen.dart';
+import 'auth/auth_state.dart';
+import './api/auth_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(); // loads .env for mobile & web
-  runApp(MyApp());
+
+  runApp(
+    MultiProvider(
+      providers: [
+        // 🔐 Global auth state
+        ChangeNotifierProvider(
+          create: (_) => AuthState(),
+        ),
+
+        // 🔁 AuthService depends on AuthState
+        ProxyProvider<AuthState, AuthService>(
+          update: (_, authState, __) => AuthService(
+            authState: authState,
+          ),
+        ),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
