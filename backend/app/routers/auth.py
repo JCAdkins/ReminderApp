@@ -70,13 +70,13 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/refresh")
-def refresh(data: RefreshRequest):
+def refresh(data: RefreshRequest, db: Session = Depends(get_db)):
     payload = verify_token(data.refresh_token, expected_type="refresh")
     if not payload:
         raise HTTPException(401, "Invalid refresh token")
 
     tokens = refresh_tokens(payload["sub"], payload["email"])
-    user = get_user(payload["email"])
+    user = get_user(db, payload["email"])
     user_response = UserResponse.model_validate({
     "id": user.id,
     "email": user.email,

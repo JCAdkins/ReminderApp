@@ -10,7 +10,6 @@ import 'models/user.dart';
 import '../auth/auth_state.dart';
 
 class AuthService {
-  // Main API client (WITH interceptors)
   final ApiClient api;
   final AuthState authState;
 
@@ -129,7 +128,7 @@ class AuthService {
       }
     } catch (e, st) {
       print("Error: $e"); // prints the error
-      print("Stacktrace: $st"); // optional: prints the stack trace
+      print("Stacktrace: $st"); // prints the stack trace
       throw ApiException(e.toString());
     }
   }
