@@ -9,8 +9,9 @@
 .buildlog/
 .history
 
-#Virtual Environment
-/backend/venv
+# Python Virtual Environment
+/backend/venv/*
+venv/*
 
 # Flutter repo-specific
 /bin/cache/

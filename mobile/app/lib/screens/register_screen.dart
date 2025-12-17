@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
 import '../widgets/form_fields/name_field.dart';
 import '../widgets/form_fields/email_field.dart';
 import '../widgets/form_fields/password_field.dart';
 import '../widgets/form_fields/dob_field.dart';
 import '../widgets/error_snackbar.dart';
+import '../widgets/horizontal_divider.dart';
 import '../api/auth_service.dart';
 import '../api/models/register_request.dart';
 import '../api/api_exception.dart';
+import '../api/google_auth_service.dart';
+
 import './home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -124,10 +129,48 @@ class RegisterScreenState extends State<RegisterScreen> {
                           : ElevatedButton(
                               onPressed: () async {
                                 FocusScope.of(context).unfocus();
-                                _submit;
+                                await _submit();
                               },
                               child: const Text("Register"),
                             ),
+
+                      const SizedBox(height: 24),
+
+                      const HorizontalDivider(text: "Or:"),
+
+                      const SizedBox(height: 16),
+
+                      /// GOOGLE REGISTER BUTTON
+                      ElevatedButton.icon(
+                        icon: SvgPicture.asset(
+                          'assets/google_logo.svg',
+                          height: 20,
+                        ),
+                        label: const Text("Continue with Google"),
+                        onPressed: () async {
+                          try {
+                            final auth = Provider.of<AuthService>(context,
+                                listen: false);
+
+                            await GoogleAuthService(authState: auth.authState)
+                                .signInWithGoogle();
+
+                            if (!context.mounted) return;
+
+                            if (auth.authState.user != null) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(builder: (_) => HomeScreen()),
+                              );
+                            } else {
+                              showErrorSnackBar(
+                                  context, "Google registration failed");
+                            }
+                          } on ApiException catch (e) {
+                            showErrorSnackBar(context, e.message);
+                          }
+                        },
+                      ),
                     ],
                   ),
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:mobile_app/widgets/horizontal_divider.dart';
 import 'package:provider/provider.dart' show Provider;
 import '../api/google_auth_service.dart';
 import '../api/auth_service.dart';
@@ -89,40 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: const Text("Login"),
                       ),
 
-                      /// LESS SPACE BEFORE REGISTER
-                      const SizedBox(height: 16),
-
-                      ElevatedButton.icon(
-                        icon: SvgPicture.asset('assets/google_logo.svg',
-                            height: 20),
-                        label: const Text("Continue with Google"),
-                        onPressed: () async {
-                          FocusScope.of(context).unfocus();
-                          try {
-                            await GoogleAuthService(authState: auth.authState)
-                                .signInWithGoogle();
-
-                            if (!context.mounted) return;
-
-                            if (auth.authState.user != null) {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(builder: (_) => HomeScreen()),
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text("Invalid credentials")),
-                              );
-                            }
-                          } on ApiException catch (e) {
-                            showErrorSnackBar(context, e.message);
-                          }
-                        },
-                      ),
-
-                      /// LESS SPACE BEFORE REGISTER
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 18),
 
                       /// FORGOT PASSWORD
                       Align(
@@ -151,6 +119,41 @@ class _LoginScreenState extends State<LoginScreen> {
                           );
                         },
                         child: const Text("Don't have an account? Register"),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      const HorizontalDivider(text: "Or: "),
+
+                      const SizedBox(height: 24),
+
+                      ElevatedButton.icon(
+                        icon: SvgPicture.asset('assets/google_logo.svg',
+                            height: 20),
+                        label: const Text("Continue with Google"),
+                        onPressed: () async {
+                          FocusScope.of(context).unfocus();
+                          try {
+                            await GoogleAuthService(authState: auth.authState)
+                                .signInWithGoogle();
+
+                            if (!context.mounted) return;
+
+                            if (auth.authState.user != null) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(builder: (_) => HomeScreen()),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text("Invalid credentials")),
+                              );
+                            }
+                          } on ApiException catch (e) {
+                            showErrorSnackBar(context, e.message);
+                          }
+                        },
                       ),
                     ],
                   ),
