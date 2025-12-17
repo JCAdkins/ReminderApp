@@ -27,40 +27,80 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthService>(context, listen: false);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text("Login")),
-      body: SingleChildScrollView(
-        child: SizedBox(
-          height: MediaQuery.of(context).size.height - kToolbarHeight,
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    /// EMAIL FIELD
-                    EmailField(controller: emailCtrl),
-                    const SizedBox(height: 16),
+    return GestureDetector(
+      behavior:
+          HitTestBehavior.opaque, // ensures taps on empty space are detected
+      onTap: () => FocusScope.of(context).unfocus(), // dismiss keyboard
+      child: Scaffold(
+        appBar: AppBar(title: const Text("Login")),
+        body: SingleChildScrollView(
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height - kToolbarHeight,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      /// EMAIL FIELD
+                      EmailField(controller: emailCtrl),
+                      const SizedBox(height: 16),
 
-                    /// PASSWORD FIELD
-                    PasswordField(controller: passCtrl),
+                      /// PASSWORD FIELD
+                      PasswordField(controller: passCtrl),
 
-                    /// ADD MORE SPACE ABOVE LOGIN BUTTON
-                    const SizedBox(height: 36),
+                      /// ADD MORE SPACE ABOVE LOGIN BUTTON
+                      const SizedBox(height: 36),
 
-                    /// LOGIN BUTTON
-                    ElevatedButton(
-                      onPressed: () async {
-                        if (_formKey.currentState!.validate()) {
-                          final request = LoginRequest(
-                            email: emailCtrl.text.trim(),
-                            password: passCtrl.text,
-                          );
+                      /// LOGIN BUTTON
+                      ElevatedButton(
+                        onPressed: () async {
+                          FocusScope.of(context).unfocus();
+                          if (_formKey.currentState!.validate()) {
+                            final request = LoginRequest(
+                              email: emailCtrl.text.trim(),
+                              password: passCtrl.text,
+                            );
 
+                            try {
+                              await auth.login(request);
+
+                              if (!context.mounted) return;
+
+                              if (auth.authState.user != null) {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => HomeScreen()),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text("Invalid credentials")),
+                                );
+                              }
+                            } on ApiException catch (e) {
+                              showErrorSnackBar(context, e.message);
+                            }
+                          }
+                        },
+                        child: const Text("Login"),
+                      ),
+
+                      /// LESS SPACE BEFORE REGISTER
+                      const SizedBox(height: 16),
+
+                      ElevatedButton.icon(
+                        icon: SvgPicture.asset('assets/google_logo.svg',
+                            height: 20),
+                        label: const Text("Continue with Google"),
+                        onPressed: () async {
+                          FocusScope.of(context).unfocus();
                           try {
-                            await auth.login(request);
+                            await GoogleAuthService(authState: auth.authState)
+                                .signInWithGoogle();
 
                             if (!context.mounted) return;
 
@@ -78,72 +118,42 @@ class _LoginScreenState extends State<LoginScreen> {
                           } on ApiException catch (e) {
                             showErrorSnackBar(context, e.message);
                           }
-                        }
-                      },
-                      child: const Text("Login"),
-                    ),
+                        },
+                      ),
 
-                    /// LESS SPACE BEFORE REGISTER
-                    const SizedBox(height: 16),
+                      /// LESS SPACE BEFORE REGISTER
+                      const SizedBox(height: 24),
 
-                    ElevatedButton.icon(
-                      icon: SvgPicture.asset('assets/google_logo.svg',
-                          height: 20),
-                      label: const Text("Continue with Google"),
-                      onPressed: () async {
-                        try {
-                          await GoogleAuthService(authState: auth.authState)
-                              .signInWithGoogle();
-
-                          if (!context.mounted) return;
-
-                          if (auth.authState.user != null) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (_) => HomeScreen()),
-                            );
-                          } else {
+                      /// FORGOT PASSWORD
+                      Align(
+                        alignment: Alignment.center,
+                        child: TextButton(
+                          onPressed: () {
+                            FocusScope.of(context).unfocus();
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                  content: Text("Invalid credentials")),
+                                content: Text("Forgot Password tapped"),
+                              ),
                             );
-                          }
-                        } on ApiException catch (e) {
-                          showErrorSnackBar(context, e.message);
-                        }
-                      },
-                    ),
+                          },
+                          child: const Text("Forgot Password?"),
+                        ),
+                      ),
 
-                    /// LESS SPACE BEFORE REGISTER
-                    const SizedBox(height: 24),
-
-                    /// FORGOT PASSWORD
-                    Align(
-                      alignment: Alignment.center,
-                      child: TextButton(
+                      /// GO TO REGISTER
+                      TextButton(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Forgot Password tapped"),
-                            ),
+                          FocusScope.of(context).unfocus();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const RegisterScreen()),
                           );
                         },
-                        child: const Text("Forgot Password?"),
+                        child: const Text("Don't have an account? Register"),
                       ),
-                    ),
-
-                    /// GO TO REGISTER
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const RegisterScreen()),
-                        );
-                      },
-                      child: const Text("Don't have an account? Register"),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

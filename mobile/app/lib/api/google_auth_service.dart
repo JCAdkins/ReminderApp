@@ -56,8 +56,13 @@ class GoogleAuthService {
         await auth.loginWithGoogle(idToken);
       }
     } on DioException catch (e) {
+      if (e.response?.statusCode == 404 &&
+          e.response?.data?['detail'] == 'User not registered') {
+        throw ApiException('USER_NOT_REGISTERED');
+      }
+
       String message = "Login failed";
-      if (e.response != null && e.response?.data != null) {
+      if (e.response?.data != null) {
         message = e.response?.data['detail'] ?? message;
       }
 
@@ -68,6 +73,8 @@ class GoogleAuthService {
       throw ApiException("Unexpected login error");
     }
   }
+
+  Future<void> registerWithGoogle() async {}
 
   Future<void> signOut() async {
     await _googleSignIn.signOut();

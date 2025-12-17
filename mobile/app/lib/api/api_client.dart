@@ -90,7 +90,7 @@ class ApiClient {
 
       // Refresh failed → logout
       await TokenStorage.clearTokens();
-      authState.clear();
+      authState.logout();
     }
 
     handler.next(e);

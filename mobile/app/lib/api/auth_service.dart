@@ -10,7 +10,7 @@ import 'models/user.dart';
 import '../auth/auth_state.dart';
 
 class AuthService {
-  // 🔐 Main API client (WITH interceptors)
+  // Main API client (WITH interceptors)
   final ApiClient api;
   final AuthState authState;
 
@@ -154,11 +154,11 @@ class AuthService {
         refreshToken: authRes.tokens.refreshToken,
       );
 
-      authState.setSession(authRes); // ✅ update AuthState
+      authState.setSession(authRes); // update AuthState
       return true;
     } catch (_) {
       await TokenStorage.clearTokens();
-      authState.clear(); // ✅ clear AuthState
+      authState.logout(); // clear AuthState
       return false;
     }
   }
@@ -203,6 +203,6 @@ class AuthService {
   // ============================
   Future<void> logout() async {
     await TokenStorage.clearTokens();
-    authState.clear();
+    authState.logout();
   }
 }

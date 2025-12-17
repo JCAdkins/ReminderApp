@@ -13,17 +13,11 @@ class AuthState extends ChangeNotifier {
 
   // ✅ Use this to set user and notify listeners
   void setUser(User user) {
-    user = user;
+    this.user = user;
     notifyListeners();
   }
 
-  // ✅ Clear user
-  void clearUser() {
-    user = null;
-    notifyListeners();
-  }
-
-  void clear() {
+  void logout() {
     user = null;
     notifyListeners();
   }

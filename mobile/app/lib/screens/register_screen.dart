@@ -91,37 +91,45 @@ class RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height - kToolbarHeight;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text("Register")),
-      body: SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: screenHeight),
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    NameField(
-                      firstNameController: _firstNameController,
-                      lastNameController: _lastNameController,
-                    ),
-                    const SizedBox(height: 16),
-                    EmailField(controller: _emailController),
-                    const SizedBox(height: 16),
-                    PasswordField(controller: _passwordController),
-                    const SizedBox(height: 16),
-                    DOBField(controller: _dobController),
-                    const SizedBox(height: 32),
-                    _isLoading
-                        ? const CircularProgressIndicator()
-                        : ElevatedButton(
-                            onPressed: _submit,
-                            child: const Text("Register"),
-                          ),
-                  ],
+    return GestureDetector(
+      behavior:
+          HitTestBehavior.opaque, // ensures taps on empty space are detected
+      onTap: () => FocusScope.of(context).unfocus(), // dismiss keyboard
+      child: Scaffold(
+        appBar: AppBar(title: const Text("Register")),
+        body: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: screenHeight),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      NameField(
+                        firstNameController: _firstNameController,
+                        lastNameController: _lastNameController,
+                      ),
+                      const SizedBox(height: 16),
+                      EmailField(controller: _emailController),
+                      const SizedBox(height: 16),
+                      PasswordField(controller: _passwordController),
+                      const SizedBox(height: 16),
+                      DOBField(controller: _dobController),
+                      const SizedBox(height: 32),
+                      _isLoading
+                          ? const CircularProgressIndicator()
+                          : ElevatedButton(
+                              onPressed: () async {
+                                FocusScope.of(context).unfocus();
+                                _submit;
+                              },
+                              child: const Text("Register"),
+                            ),
+                    ],
+                  ),
                 ),
               ),
             ),

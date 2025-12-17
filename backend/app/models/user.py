@@ -2,7 +2,6 @@ from sqlalchemy import Column, Date, Integer, String, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.db import Base
-from app.models.oauth_token import OAuthTokenDb
 
 class User(Base):
     __tablename__ = "users"

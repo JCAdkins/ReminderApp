@@ -1,11 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.services.oauth_google_service import save_google_tokens, get_google_tokens
+from app.services.oauth_google_service import fetch_google_userinfo, save_google_tokens, get_google_tokens, find_or_create_google_user, get_names, verify_google_access_token, verify_google_id_token
 from app.db import get_db
-from app.models.user import User
 from app.services.auth_service import generate_tokens
-from app.utils.google_helpers import verify_google_access_token, verify_google_id_token
 from app.schemas.google_mobile_login import GoogleMobileLogin
 from app.schemas.google_web_login import GoogleWebLogin
 from app.schemas.auth_response import AuthResponse
@@ -19,28 +17,14 @@ def google_login(payload: GoogleMobileLogin, db: Session = Depends(get_db)):
     id_token_str = payload.id_token
     google_user = verify_google_id_token(id_token_str)
 
-    email = google_user.get("email")
-    google_id = google_user.get("sub")
-
-    print("google_user: ", google_user)
-
-    user = db.query(User).filter(
-        (User.email == email) | (User.google_id == google_id)
-    ).first()
-
-    print("user: ", user)
-
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not registered"
-        )
+    if google_user.get("email_verified") is not True:
+        raise HTTPException(status_code=401, detail="Email not verified")
     
-        # update google_id in user if not set
-    if not user.google_id:
-        user.google_id = google_id
-        db.commit()
-        db.refresh(user)
+    first_name, last_name = get_names(google_user)
+    google_id = google_user.get("sub")
+    email = google_user.get("email")
+
+    user = find_or_create_google_user(db,  google_id= google_id, email=email, first_name=first_name, last_name=last_name) 
 
     tokens = generate_tokens(user)
     scopes = ["email", "profile", "openid"]
@@ -60,57 +44,52 @@ def google_login(payload: GoogleMobileLogin, db: Session = Depends(get_db)):
 
 @router.post("/web")
 def google_web_login(payload: GoogleWebLogin, db: Session = Depends(get_db)):
-    email = payload.email
-    google_id = payload.google_id
     access_token = payload.access_token
 
-    # Verify token with Google
+    # Verify access token with Google
     token_info = verify_google_access_token(access_token)
 
-    # Validate token contents
-    if token_info.get("email") != email:
-        raise HTTPException(status_code=401, detail="Email mismatch")
+    google_id = token_info.get("sub")
+    email = token_info.get("email")
 
-    if token_info.get("sub") != google_id:
-        raise HTTPException(status_code=401, detail="Google ID mismatch")
+    if not google_id or not email:
+        raise HTTPException(status_code=401, detail="Invalid Google token")
 
     # Optional but recommended
     if token_info.get("email_verified") != "true":
         raise HTTPException(status_code=401, detail="Email not verified")
 
-    # Find user
-    user = db.query(User).filter(
-        (User.email == email) | (User.google_id == google_id)
-    ).first()
+    # Extract names (same helper as mobile)
+    first_name, last_name = get_names(token_info)
 
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not registered"
-        )
-        
-    # Link Google ID if missing
-    if not user.google_id:
-        user.google_id = google_id
-        db.commit()
+    if not first_name and not last_name:
+        profile = fetch_google_userinfo(access_token)
+        first_name, last_name = get_names(profile)
 
-    # 4Issue backend tokens
+
+    # Find or create user
+    user = find_or_create_google_user(
+        db,
+        google_id=google_id,
+        email=email,
+        first_name=first_name,
+        last_name=last_name,
+    )
+
+    # Generate backend tokens
     tokens = generate_tokens(user)
     scopes = ["email", "profile", "openid"]
     save_google_tokens(db, user, tokens, scopes)
 
     user_response = UserResponse.model_validate({
-    "id": user.id,
-    "email": user.email,
-    "first_name": user.first_name,
-    "last_name": user.last_name,
-    "dob": user.dob,
+        "id": user.id,
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "dob": user.dob,
     })
-    return AuthResponse(
-        tokens = tokens,
-        user = user_response
-    )
 
+    return AuthResponse(tokens=tokens, user=user_response)
 
 @router.get("/get")
 def fetch_tokens(
