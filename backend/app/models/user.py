@@ -14,10 +14,15 @@ class User(Base):
     dob = Column(Date, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    google_id = Column(String, unique=True, nullable=True)
-
     oauth_tokens = relationship(
         "OAuthTokenDb",
+        back_populates="user",
+        cascade="all, delete",
+        lazy="selectin"
+    )
+
+    oauth_providers = relationship(
+        "UserOAuthProvider",
         back_populates="user",
         cascade="all, delete",
         lazy="selectin"

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.models.oauth_token import OAuthTokenDb
 from app.models.user import User
 from app.schemas.oauth_token import OAuthToken
+from app.models.user_oauth_provider import UserOAuthProvider
 
 GOOGLE_TOKENINFO_URL = "https://www.googleapis.com/oauth2/v3/tokeninfo"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
@@ -101,48 +102,6 @@ def verify_google_access_token(access_token: str) -> dict:
         )
 
     return token_info
-
-
-def find_or_create_google_user(
-        db,
-        *,
-        google_id: str,
-        email: str,
-        first_name: str | None = None,
-        last_name: str | None = None,
-    ):
-        # 1️⃣ Primary lookup: google_id
-        user = db.query(User).filter(User.google_id == google_id).first()
-
-        if user:
-            # Update email if Google says it changed
-            if user.email != email:
-                user.email = email
-                db.commit()
-
-            return user
-
-        # 2️⃣ Secondary lookup: email (account linking)
-        user = db.query(User).filter(User.email == email).first()
-
-        if user:
-            # Link Google account
-            user.google_id = google_id
-            db.commit()
-            return user
-
-        # 3️⃣ Create new user
-        user = User(
-            email=email,
-            google_id=google_id,
-            first_name=first_name,
-            last_name=last_name,
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-
-        return user
 
 
 def get_names(google_user: dict) -> tuple[str, str]:

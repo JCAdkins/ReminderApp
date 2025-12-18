@@ -14,28 +14,35 @@ class OpenScreen extends StatefulWidget {
 }
 
 class _OpenScreenState extends State<OpenScreen> {
+  bool _loading = true;
+
   @override
   void initState() {
-    final auth = Provider.of<AuthService>(context, listen: false);
     super.initState();
+    final auth = Provider.of<AuthService>(context, listen: false);
 
-    void checkLogin() async {
+    Future<void> checkLogin() async {
+      // 1️⃣ Check your app's stored tokens first
       final accessToken = await TokenStorage.getAccessToken();
       final refreshToken = await TokenStorage.getRefreshToken();
 
       if (!mounted) return;
 
-      if (accessToken == null && refreshToken == null) {
-        // No tokens stored -> user must log in
-        return;
+      if (accessToken != null || refreshToken != null) {
+        // Try auto-login with your backend tokens
+        await auth.tryAutoLogin();
+        if (auth.authState.user != null) {
+          setState(() {
+            _loading = false; // done checking
+          });
+          _goToHome();
+          return;
+        }
       }
-
-      // Try auto-login with either token
-      await auth.tryAutoLogin();
-
-      if (auth.authState.user != null) {
-        _goToHome();
-      }
+      setState(() {
+        _loading = false; // done checking
+      });
+      // If neither method succeeded, user stays on OpenScreen
     }
 
     checkLogin();
@@ -43,6 +50,11 @@ class _OpenScreenState extends State<OpenScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
