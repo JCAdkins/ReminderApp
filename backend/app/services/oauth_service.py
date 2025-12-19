@@ -14,8 +14,9 @@ def find_or_create_oauth_user(
     email: str,
     first_name: str | None = None,
     last_name: str | None = None,
+    dob: datetime | None = None
 ) -> User:
-    # 1️⃣ Primary lookup: provider + provider_user_id
+    # Primary lookup: provider + provider_user_id
     provider_entry = (
         db.query(UserOAuthProvider)
         .filter_by(provider=provider, provider_user_id=provider_user_id)
@@ -29,7 +30,7 @@ def find_or_create_oauth_user(
             db.commit()
         return user
 
-    # 2️⃣ Secondary lookup: email (account linking)
+    # Secondary lookup: email (account linking)
     user = db.query(User).filter(User.email == email).first()
     if user:
         new_provider = UserOAuthProvider(
@@ -41,11 +42,12 @@ def find_or_create_oauth_user(
         db.commit()
         return user
 
-    # 3️⃣ Create new user and link provider
+    # Create new user and link provider
     user = User(
         email=email,
         first_name=first_name,
         last_name=last_name,
+        dob=dob.date()
     )
     db.add(user)
     db.commit()

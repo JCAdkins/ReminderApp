@@ -107,6 +107,36 @@ class AuthService {
     }
   }
 
+// ============================
+// FACEBOOK LOGIN (MOBILE)
+// ============================
+  Future<void> loginWithFacebookMobile(String fbToken) async {
+    try {
+      // Send only the access token to the backend
+      final res = await api.dio.post(
+        '/auth/facebook/mobile',
+        data: {'access_token': fbToken},
+      );
+
+      final authRes = AuthResponse.fromJson(res.data);
+
+      // Save access + refresh tokens
+      await TokenStorage.saveTokens(
+        accessToken: authRes.tokens.accessToken,
+        refreshToken: authRes.tokens.refreshToken,
+      );
+
+      // Update global auth state
+      authState.setSession(authRes);
+    } on DioException catch (e) {
+      throw ApiException(
+        e.response?.data?['detail'] ?? "Facebook login failed",
+      );
+    } catch (_) {
+      throw ApiException("Unexpected Facebook login error");
+    }
+  }
+
   // ============================
   // AUTO LOGIN
   // ============================

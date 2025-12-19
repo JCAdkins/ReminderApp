@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import auth, health, oauth, oauth_google
+from app.routers import auth, health, oauth, oauth_google, oauth_facebook
 from app.db import Base, engine
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -23,6 +23,7 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(oauth.router)
 app.include_router(oauth_google.router)
+app.include_router(oauth_facebook.router)
 
 @app.get("/home")
 async def root():

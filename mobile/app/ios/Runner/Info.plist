@@ -36,7 +36,19 @@
 				<string>com.googleusercontent.apps.948019572382-bnt23v6tjgh3rgp3tcgpf0htvmilde86</string>
 			</array>
 		</dict>
+		  <dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+			<string>fb768012376313308</string>
+			</array>
+		</dict>
 	</array>
+	<key>FacebookAppID</key>
+	<string>768012376313308</string>
+	<key>FacebookClientToken</key>
+	<string>28e47fc77c6aa95918692e4fa77e55b7</string>
+	<key>FacebookDisplayName</key>
+	<string>iRemind</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>

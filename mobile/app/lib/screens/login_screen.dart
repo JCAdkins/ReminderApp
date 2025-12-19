@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mobile_app/widgets/horizontal_divider.dart';
 import 'package:provider/provider.dart' show Provider;
+
 import '../api/google_auth_service.dart';
 import '../api/auth_service.dart';
 import '../api/models/login_request.dart';
@@ -9,6 +10,7 @@ import '../api/api_exception.dart';
 import './register_screen.dart';
 import '../widgets/form_fields/email_field.dart';
 import '../widgets/form_fields/password_field.dart';
+import '../widgets/fb_login_button.dart';
 import '../widgets/error_snackbar.dart';
 import './home_screen.dart';
 
@@ -155,6 +157,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           }
                         },
                       ),
+                      const SizedBox(height: 12),
+
+                      const FacebookLoginButton(),
                     ],
                   ),
                 ),
