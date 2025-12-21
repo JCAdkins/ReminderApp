@@ -12,23 +12,19 @@ class FbAuthService {
   Future<void> login() async {
     try {
       final result = await FacebookAuth.instance.login(
-        permissions: ['email', 'public_profile'],
-      );
-
-      // final result = await FacebookAuth.instance.login(
-      //   loginBehavior: LoginBehavior.nativeWithFallback,
-      //   permissions: ['email', 'public_profile'],
-      //   loginTracking: LoginTracking.limited, // 🔑 REQUIRED
-      // );
-
-      final idToken = result.accessToken?.token;
+          permissions: ['email', 'public_profile'],
+          loginTracking: LoginTracking.enabled,
+          loginBehavior: LoginBehavior.nativeWithFallback);
 
       if (result.status != LoginStatus.success) {
         throw ApiException("Facebook login failed: ${result.status}");
       }
-      print("accessToken: ${result.accessToken}");
-      final fbToken = result.accessToken!.token;
-      print("token: $fbToken");
+
+      final fbToken = result.accessToken?.tokenString;
+
+      if (fbToken == null || fbToken.isEmpty) {
+        throw ApiException('Facebook login failed: missing access token');
+      }
 
       if (kIsWeb) {
         throw ApiException("Facebook login is not supported on web yet.");

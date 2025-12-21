@@ -115,7 +115,7 @@ class AuthService {
       // Send only the access token to the backend
       final res = await api.dio.post(
         '/auth/facebook/mobile',
-        data: {'access_token': fbToken},
+        data: {'id_token': fbToken},
       );
 
       final authRes = AuthResponse.fromJson(res.data);

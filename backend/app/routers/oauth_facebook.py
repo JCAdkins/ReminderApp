@@ -3,7 +3,7 @@ from requests import Session
 
 from app.schemas.auth_response import AuthResponse
 from app.schemas.user_response import UserResponse
-from app.schemas.facebook_login import FacebookLoginRequest
+from app.schemas.facebook_login import FacebookMobileLoginRequest
 from app.services.auth_service import generate_tokens
 from app.services.oauth_service import find_or_create_oauth_user, upsert_oauth_tokens
 from app.services.oauth_facebook_service import verify_facebook_token
@@ -18,22 +18,20 @@ FACEBOOK_URL = "https://graph.facebook.com/me"
 # ============================
 @router.post("/mobile")
 def facebook_mobile_login(
-    payload: FacebookLoginRequest,
+    payload: FacebookMobileLoginRequest,
     db: Session = Depends(get_db),
 ):
-    if not payload.access_token:
+    if not payload.id_token:
         raise HTTPException(
             status_code=400,
-            detail="Facebook access token required",
+            detail="Facebook ID token required",
         )
 
     # Verify token with Facebook
-    fb_data = verify_facebook_token(payload.access_token)
-
-    print("fb_data: ", fb_data)
+    fb_data = verify_facebook_token(payload.id_token)
 
     provider = "facebook"
-    provider_user_id = fb_data.get("id")
+    provider_user_id = fb_data.get("facebook_user_id")
     email = fb_data.get("email")
 
     if not provider_user_id:
@@ -52,7 +50,6 @@ def facebook_mobile_login(
     first_name = fb_data.get("first_name")
     last_name = fb_data.get("last_name")
     dob_str = fb_data.get("birthday")
-    print("dob_string: ", dob_str)
     dob = None
     if dob_str:
         from datetime import datetime
@@ -61,7 +58,6 @@ def facebook_mobile_login(
         except ValueError:
             pass  # invalid or missing format
 
-    print("dob: ", dob)
     # Find or create user (GENERIC)
     user = find_or_create_oauth_user(
         db,
@@ -81,7 +77,7 @@ def facebook_mobile_login(
         db,
         user=user,
         provider=provider,
-        access_token=payload.access_token,
+        access_token= tokens.access_token,
         scopes=["email", "public_profile"],
     )
 

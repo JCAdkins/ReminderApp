@@ -25,8 +25,14 @@ def find_or_create_oauth_user(
 
     if provider_entry:
         user = provider_entry.user
+        updated = False
         if user.email != email:
             user.email = email
+            updated = True
+        if dob and (not user.dob or user.dob != dob):
+            user.dob = dob
+            updated = True
+        if updated:
             db.commit()
         return user
 
@@ -47,7 +53,7 @@ def find_or_create_oauth_user(
         email=email,
         first_name=first_name,
         last_name=last_name,
-        dob=dob.date()
+        dob=dob
     )
     db.add(user)
     db.commit()

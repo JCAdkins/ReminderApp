@@ -1,5 +1,5 @@
 from pydantic import BaseModel
 
 
-class FacebookLoginRequest(BaseModel):
-    access_token: str
+class FacebookMobileLoginRequest(BaseModel):
+    id_token: str
