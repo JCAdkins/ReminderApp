@@ -1,0 +1,48 @@
+from datetime import datetime
+from uuid import UUID
+from pydantic import BaseModel, Field
+
+
+class ReminderBase(BaseModel):
+    title: str
+    description: str | None = None
+    type: str
+    start_at: datetime
+    end_at: datetime | None = None
+    timezone: str
+    is_all_day: bool = False
+    recurrence_rule: str | None = None
+    notify_offsets: list[int] = Field(default_factory=list)
+    priority: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+class ReminderCreate(ReminderBase):
+    pass
+
+
+class ReminderUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    start_at: datetime | None = None
+    end_at: datetime | None = None
+    timezone: str | None = None
+    is_all_day: bool | None = None
+    recurrence_rule: str | None = None
+    notify_offsets: list[int] | None = None
+    priority: int | None = None
+    status: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class ReminderResponse(ReminderBase):
+    id: UUID
+    status: str
+    completed_at: datetime | None
+
+    class Config:
+        from_attributes = True

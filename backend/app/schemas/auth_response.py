@@ -8,8 +8,6 @@ class AuthResponse(BaseModel):
     user: UserResponse
 
     class Config:
-        orm_mode = True
-
         model_config = {
         "from_attributes": True  # <-- allows conversion from ORM objects
     }

@@ -1,12 +1,20 @@
-from sqlalchemy import Column, Date, Integer, String, DateTime
+import uuid
+from pydantic import ConfigDict
+from sqlalchemy import Column, Date, String, DateTime
 from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db import Base
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        index=True,
+    )
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=True)  # nullable if using OAuth only
     first_name = Column(String, nullable=False)
@@ -28,6 +36,4 @@ class User(Base):
         lazy="selectin"
     )
 
-    model_config = {
-        "from_attributes": True  # <-- allows conversion from ORM objects
-    }
+    model_config = ConfigDict(from_attributes=True)

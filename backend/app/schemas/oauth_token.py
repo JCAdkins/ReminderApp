@@ -9,8 +9,6 @@ class OAuthToken(BaseModel):
     expires_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
-
         model_config = {
         "from_attributes": True  # <-- allows conversion from ORM objects
     }

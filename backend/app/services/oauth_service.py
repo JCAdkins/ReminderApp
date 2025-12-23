@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
@@ -16,6 +17,7 @@ def find_or_create_oauth_user(
     last_name: str | None = None,
     dob: datetime | None = None
 ) -> User:
+
     # Primary lookup: provider + provider_user_id
     provider_entry = (
         db.query(UserOAuthProvider)
@@ -25,21 +27,19 @@ def find_or_create_oauth_user(
 
     if provider_entry:
         user = provider_entry.user
-        updated = False
         if user.email != email:
             user.email = email
-            updated = True
-        if dob and (not user.dob or user.dob != dob):
-            user.dob = dob
-            updated = True
-        if updated:
-            db.commit()
+        # Update DOB if passed in and not set
+        if dob and not user.dob:
+            user.dob = dob.date() if isinstance(dob, datetime) else dob
+        db.commit()
         return user
 
     # Secondary lookup: email (account linking)
     user = db.query(User).filter(User.email == email).first()
     if user:
         new_provider = UserOAuthProvider(
+            id=uuid.uuid4(),
             user_id=user.id,
             provider=provider,
             provider_user_id=provider_user_id,
@@ -50,16 +50,18 @@ def find_or_create_oauth_user(
 
     # Create new user and link provider
     user = User(
+        id=uuid.uuid4(),
         email=email,
         first_name=first_name,
         last_name=last_name,
-        dob=dob
+        dob=dob.date() if isinstance(dob, datetime) else dob
     )
     db.add(user)
     db.commit()
     db.refresh(user)
 
     new_provider = UserOAuthProvider(
+        id=uuid.uuid4(),
         user_id=user.id,
         provider=provider,
         provider_user_id=provider_user_id,
@@ -80,16 +82,18 @@ def upsert_oauth_tokens(
     expires_in: int | None = None,
     scopes: list | None = None
 ) -> OAuthTokenDb:
-    """
-    Insert or update the OAuthTokenDb row for this user/provider.
-    """
     token = (
         db.query(OAuthTokenDb)
         .filter_by(user_id=user.id, provider=provider)
         .first()
     )
+
     if not token:
-        token = OAuthTokenDb(user_id=user.id, provider=provider)
+        token = OAuthTokenDb(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            provider=provider
+        )
         db.add(token)
 
     token.access_token = access_token
@@ -101,7 +105,6 @@ def upsert_oauth_tokens(
     db.refresh(token)
 
     return token
-
 
 
 def save_oauth_tokens(

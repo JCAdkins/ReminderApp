@@ -2,13 +2,14 @@
 from pydantic import BaseModel
 from datetime import date
 from typing import Optional
+from uuid import UUID
 
 class UserResponse(BaseModel):
-    id: int
+    id: UUID
     email: str
     first_name: str
     last_name: str
     dob: Optional[date] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
