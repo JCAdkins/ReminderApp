@@ -9,8 +9,8 @@ from app.services.auth_service import (
 from app.oauth.jwt import verify_token
 from app.dependencies import get_current_user
 from app.schemas.user_response import UserResponse
-from app.models.user import User
 from app.schemas.auth_response import AuthResponse
+from app.oauth.exceptions import OAuthOnlyAccount
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -53,20 +53,36 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
 
 @router.post("/login")
 def login(data: LoginRequest, db: Session = Depends(get_db)):
-    user = authenticate_user(db, data.email, data.password)
+    try:
+        user = authenticate_user(db, data.email, data.password)
+    except OAuthOnlyAccount as e:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error": "OAUTH_ONLY_ACCOUNT",
+                "provider": e.provider.capitalize()
+            }
+        )
+
     if not user:
-        raise HTTPException(400, "Invalid credentials")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid credentials"
+        )
+
     user_response = UserResponse.model_validate({
-    "id": user.id,
-    "email": user.email,
-    "first_name": user.first_name,
-    "last_name": user.last_name,
-    "dob": user.dob,
+        "id": user.id,
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "dob": user.dob,
     })
+
     return AuthResponse(
-        tokens = generate_tokens(user),
-        user = user_response
+        tokens=generate_tokens(user),
+        user=user_response
     )
+
 
 
 @router.post("/refresh")

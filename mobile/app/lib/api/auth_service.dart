@@ -37,8 +37,26 @@ class AuthService {
 
       authState.setSession(authRes);
     } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final data = e.response?.data;
+
+      // Handle OAuth-only account
+      if (status == 409 && data?['detail'] is Map) {
+        final provider = data['detail']['provider'];
+
+        throw ApiException(
+          "This account was created using ${provider ?? 'social login'}. "
+          "Please sign in with that method or set a password first.",
+        );
+      }
+
+      // Normal invalid credentials
+      if (status == 400) {
+        throw ApiException("Invalid email or password");
+      }
+
       throw ApiException(
-        e.response?.data?['detail'] ?? "Login failed",
+        data?['detail'] ?? "Login failed",
       );
     } catch (_) {
       throw ApiException("Unexpected login error");
