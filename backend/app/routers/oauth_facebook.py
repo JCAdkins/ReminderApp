@@ -5,8 +5,8 @@ from app.schemas.auth_response import AuthResponse
 from app.schemas.user_response import UserResponse
 from app.schemas.facebook_login import FacebookMobileLoginRequest
 from app.services.auth_service import generate_tokens
-from app.services.oauth_service import find_or_create_oauth_user, upsert_oauth_tokens
-from app.services.oauth_facebook_service import verify_facebook_token
+from app.services.oauth.oauth_service import find_or_create_oauth_user, upsert_oauth_tokens
+from app.services.oauth.oauth_facebook_service import verify_facebook_token
 from app.db import get_db
 
 

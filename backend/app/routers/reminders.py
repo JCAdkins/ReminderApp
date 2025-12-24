@@ -9,7 +9,7 @@ from app.schemas.reminder import (
     ReminderUpdate,
     ReminderResponse,
 )
-from app.services.reminders_service import cancel_reminder_service, complete_reminder_service, create_reminder_service, get_user_reminders_service, get_reminder_service, update_reminder_service
+from app.services.reminders.reminders_service import cancel_reminder_service, complete_reminder_service, create_reminder_service, get_user_reminders_service, get_reminder_service, update_reminder_service
 
 router = APIRouter(prefix="/api/reminders", tags=["Reminders"])
 

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from datetime import datetime
 from app.db import get_db
-from app.services.oauth_service import save_oauth_tokens
+from app.services.oauth.oauth_service import save_oauth_tokens
 from app.oauth.jwt import verify_token
 
 router = APIRouter(prefix="/oauth", tags=["oauth"])

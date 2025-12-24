@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.services.oauth_google_service import fetch_google_userinfo, get_google_tokens, get_names, verify_google_access_token, verify_google_id_token
+from app.services.oauth.oauth_google_service import fetch_google_userinfo, get_google_tokens, get_names, verify_google_access_token, verify_google_id_token
 from app.db import get_db
 from app.services.auth_service import generate_tokens
 from app.schemas.google_mobile_login import GoogleMobileLogin
 from app.schemas.google_web_login import GoogleWebLogin
 from app.schemas.auth_response import AuthResponse
 from app.schemas.user_response import UserResponse
-from app.services.oauth_service import find_or_create_oauth_user, upsert_oauth_tokens
+from app.services.oauth.oauth_service import find_or_create_oauth_user, upsert_oauth_tokens
 
 
 router = APIRouter(prefix="/auth/google", tags=["Google OAuth"])
