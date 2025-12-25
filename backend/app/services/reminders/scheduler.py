@@ -1,49 +1,58 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 from sqlalchemy.orm import Session
+
 from app.db import SessionLocal
 from app.models.reminder import Reminder
+from app.models.reminder_notification import ReminderNotification
 
-def send_notification(reminder: Reminder, seconds_before: int):
-    """
-    Send the actual notification to the user.
-    """
-    print(f"[{datetime.utcnow()}] Notify {reminder.user_id}: '{reminder.title}' "
-          f"(offset {seconds_before}s before event)")
 
-def get_due_reminders(db: Session):
+def send_notification(reminder: Reminder, offset_seconds: int):
     """
-    Return all active reminders that are due for notification based on offsets.
+    Dispatch notification.
+    Replace this later with push / email / SMS logic.
     """
-    now_utc = datetime.now(pytz.UTC)
-    reminders = db.query(Reminder).filter(Reminder.status == "active").all()
-    
-    due = []
-    for r in reminders:
-        tz = pytz.timezone(r.timezone)
-        start_local = r.start_at.astimezone(tz)
-        
-        for offset in r.notify_offsets or [0]:
-            notify_time = start_local - timedelta(seconds=offset)
-            if notify_time.astimezone(pytz.UTC) <= now_utc:
-                due.append((r, offset))
-    
-    return due
+    print(
+        f"[{datetime.utcnow().isoformat()}] "
+        f"Notify user={reminder.user_id} | "
+        f"title='{reminder.title}' | "
+        f"offset={offset_seconds}s"
+    )
 
-def process_reminders():
-    db = SessionLocal()
+
+def process_notifications():
+    """
+    Find all due, unsent reminder notifications and send them.
+    """
+    db: Session = SessionLocal()
     try:
-        due_reminders = get_due_reminders(db)
-        for reminder, offset in due_reminders:
-            send_notification(reminder, offset)
+        now = datetime.now(pytz.UTC)
 
-            # Optional: mark completed only if the event has passed completely
-            if datetime.now(pytz.UTC) >= reminder.start_at.astimezone(pytz.UTC):
-                reminder.status = "completed"
-                db.add(reminder)
+        notifications = (
+            db.query(ReminderNotification)
+            .join(Reminder)
+            .filter(
+                Reminder.status == "active",
+                ReminderNotification.sent_at.is_(None),
+                ReminderNotification.fire_at <= now,
+            )
+            .order_by(ReminderNotification.fire_at.asc())
+            .all()
+        )
+
+        for notification in notifications:
+            send_notification(
+                notification.reminder,
+                notification.offset_seconds,
+            )
+
+            # Mark notification as sent (idempotency)
+            notification.sent_at = now
+
         db.commit()
+
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
-
-if __name__ == "__main__":
-    process_reminders()

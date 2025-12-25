@@ -2,11 +2,18 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from app.models.reminder import Reminder
 from app.schemas.reminder import ReminderCreate, ReminderUpdate
+from app.services.reminders.reminder_notifications import generate_notifications_for_reminder
+from app.models.reminder_notification import ReminderNotification
 
 
 def create_reminder_service(db: Session, *, user_id, data: ReminderCreate) -> Reminder:
     reminder = Reminder(user_id=user_id, **data.model_dump())
     db.add(reminder)
+    db.flush()
+
+    notifications = generate_notifications_for_reminder(reminder)
+    db.add_all(notifications)
+
     db.commit()
     db.refresh(reminder)
     return reminder
@@ -38,6 +45,16 @@ def update_reminder_service(
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(reminder, key, value)
 
+        # Delete future unsent notifications
+    db.query(ReminderNotification).filter(
+        ReminderNotification.reminder_id == reminder.id,
+        ReminderNotification.sent_at.is_(None),
+    ).delete(synchronize_session=False)
+
+    # Rebuild notifications
+    notifications = generate_notifications_for_reminder(reminder)
+    db.add_all(notifications)
+
     db.commit()
     db.refresh(reminder)
     return reminder
@@ -46,6 +63,12 @@ def update_reminder_service(
 def complete_reminder_service(db: Session, *, reminder: Reminder) -> Reminder:
     reminder.status = "completed"
     reminder.completed_at = datetime.utcnow()
+
+    db.query(ReminderNotification).filter(
+        ReminderNotification.reminder_id == reminder.id,
+        ReminderNotification.sent_at.is_(None),
+    ).delete(synchronize_session=False)
+
     db.commit()
     db.refresh(reminder)
     return reminder
@@ -53,6 +76,12 @@ def complete_reminder_service(db: Session, *, reminder: Reminder) -> Reminder:
 
 def cancel_reminder_service(db: Session, *, reminder: Reminder) -> Reminder:
     reminder.status = "cancelled"
+
+    db.query(ReminderNotification).filter(
+        ReminderNotification.reminder_id == reminder.id,
+        ReminderNotification.sent_at.is_(None),
+    ).delete(synchronize_session=False)
+
     db.commit()
     db.refresh(reminder)
     return reminder

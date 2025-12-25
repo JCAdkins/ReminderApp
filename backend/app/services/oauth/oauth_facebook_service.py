@@ -30,7 +30,7 @@ def verify_facebook_token(fb_token: str):
             issuer="https://www.facebook.com",
         )
 
-        # 🔐 Nonce replay protection
+        # Nonce replay protection
         nonce = claims.get("nonce")
         if nonce:
             if nonce in nonce_cache:
