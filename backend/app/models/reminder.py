@@ -13,6 +13,17 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from app.db import Base
+from enum import Enum
+
+class ReminderType(str, Enum):
+    birthday = "birthday"
+    anniversary = "anniversary"
+    task = "task"
+    bill = "bill"
+    health = "health"
+    trip = "trip"
+    custom = "custom"
+
 
 
 class Reminder(Base):
@@ -30,8 +41,7 @@ class Reminder(Base):
     title = Column(String(255), nullable=False)
     description = Column(Text)
 
-    type = Column(String(50), nullable=False)
-    # birthday | anniversary | task | bill | health | trip | custom
+    type = ReminderType
 
     start_at = Column(DateTime(timezone=True), nullable=False)
     end_at = Column(DateTime(timezone=True))

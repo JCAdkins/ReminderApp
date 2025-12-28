@@ -1,3 +1,4 @@
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 from datetime import datetime
 from app.models.reminder import Reminder
@@ -12,7 +13,7 @@ def create_reminder_service(db: Session, *, user_id, data: ReminderCreate) -> Re
     db.flush()
 
     notifications = build_notifications_for_reminder(reminder)
-    db.add_all(notifications)
+    insert_notifications_safe(db, notifications)
 
     db.commit()
     db.refresh(reminder)
@@ -51,7 +52,7 @@ def update_reminder_service(
     ).delete(synchronize_session=False)
 
     notifications = build_notifications_for_reminder(reminder)
-    db.add_all(notifications)
+    insert_notifications_safe(db, notifications)
 
     db.commit()
     db.refresh(reminder)
@@ -83,3 +84,22 @@ def cancel_reminder_service(db: Session, *, reminder: Reminder) -> Reminder:
     db.commit()
     db.refresh(reminder)
     return reminder
+
+def insert_notifications_safe(db: Session, notifications: list[ReminderNotification]):
+    if not notifications:
+        return
+
+    stmt = insert(ReminderNotification).values(
+        [
+            {
+                "reminder_id": n.reminder_id,
+                "fire_at": n.fire_at,
+                "offset_seconds": n.offset_seconds,
+            }
+            for n in notifications
+        ]
+    ).on_conflict_do_nothing(
+        index_elements=["reminder_id", "fire_at"]
+    )
+
+    db.execute(stmt)
