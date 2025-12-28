@@ -4,7 +4,7 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 
 from app.db import Base
-from app.models import user, oauth_token  # ensure models are imported
+from app.models import oauth_token, reminder_notification, reminder, user_oauth_provider, user  # ensure models are imported
 
 from dotenv import load_dotenv
 import os

@@ -9,6 +9,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     JSON,
+    Enum as SQLEnum
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
@@ -41,7 +42,7 @@ class Reminder(Base):
     title = Column(String(255), nullable=False)
     description = Column(Text)
 
-    type = ReminderType
+    type = Column(SQLEnum(ReminderType, name="reminder_type"),nullable=False,)
 
     start_at = Column(DateTime(timezone=True), nullable=False)
     end_at = Column(DateTime(timezone=True))

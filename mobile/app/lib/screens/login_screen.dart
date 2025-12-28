@@ -10,7 +10,7 @@ import '../api/api_exception.dart';
 import './register_screen.dart';
 import '../widgets/form_fields/email_field.dart';
 import '../widgets/form_fields/password_field.dart';
-import '../widgets/fb_login_button.dart';
+import '../widgets/buttons/fb_login_button.dart';
 import '../widgets/error_snackbar.dart';
 import './home_screen.dart';
 

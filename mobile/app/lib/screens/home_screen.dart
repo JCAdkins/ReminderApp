@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../api/auth_service.dart';
 import './open_screen.dart';
 import '../widgets/blurred_panel.dart';
-import '../widgets/neon_button.dart';
+import '../widgets/buttons/neon_button.dart';
 import '../widgets/swipeable_panel.dart';
 import '../widgets/reminder_calendar.dart';
+import '../widgets/sheets/create_reminder_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,7 +18,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final PageController _pageController = PageController(viewportFraction: 1.1);
-
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 
@@ -24,6 +25,16 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _openCreateReminderSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const CreateReminderSheet(),
+    );
   }
 
   @override
@@ -113,13 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: NeonButton(
                         label: "Create New Reminder",
                         icon: Icons.add,
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Create Reminder tapped"),
-                            ),
-                          );
-                        },
+                        onTap: _openCreateReminderSheet,
                       ),
                     ),
                     const SizedBox(height: 10),

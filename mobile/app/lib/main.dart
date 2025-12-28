@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:timezone/data/latest.dart' as tz;
 
 import 'screens/open_screen.dart';
 import 'auth/auth_state.dart';
@@ -9,6 +10,7 @@ import './api/auth_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(); // loads .env for mobile & web
+  tz.initializeTimeZones();
 
   runApp(
     MultiProvider(
