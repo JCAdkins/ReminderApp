@@ -1,4 +1,5 @@
 # app/dependencies/auth.py
+import uuid
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -31,7 +32,7 @@ def get_current_user(
             detail="Invalid token",
         )
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    user = db.query(User).filter(User.id == uuid.UUID(user_id)).first()
     tokens = generate_tokens(user)
     if not user:
         raise HTTPException(

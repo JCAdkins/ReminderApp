@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobile_app/config.dart';
 import 'package:mobile_app/utils/token_storage.dart';
-import 'auth_service.dart';
+import 'auth/auth_service.dart';
 import '../auth/auth_state.dart';
 
 class ApiClient {

@@ -55,8 +55,10 @@ class ReminderNotification(Base):
         nullable=False,
     )
 
-    # Relationship (no eager join)
-    reminder = relationship("Reminder", backref="notifications")
+    reminder = relationship(
+        "Reminder",
+        back_populates="notifications",
+    )
 
     __table_args__ = (
         # Idempotency guarantee

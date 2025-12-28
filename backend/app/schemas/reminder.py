@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 from uuid import UUID
 from pydantic import BaseModel, Field
 
@@ -39,10 +40,20 @@ class ReminderUpdate(BaseModel):
         from_attributes = True
 
 
+class ReminderNotificationResponse(BaseModel):
+    id: UUID
+    fire_at: datetime
+    offset_seconds: int
+
+    class Config:
+        from_attributes = True
+
+
 class ReminderResponse(ReminderBase):
     id: UUID
     status: str
     completed_at: datetime | None
+    notifications: List[ReminderNotificationResponse] = []
 
     class Config:
         from_attributes = True

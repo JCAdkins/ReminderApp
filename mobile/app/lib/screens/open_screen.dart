@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../utils/token_storage.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
-import '../api/auth_service.dart';
+import '../api/auth/auth_service.dart';
 import 'home_screen.dart';
 
 class OpenScreen extends StatefulWidget {

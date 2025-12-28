@@ -2,12 +2,12 @@ import 'package:dio/dio.dart';
 import 'package:mobile_app/api/api_exception.dart';
 import 'package:mobile_app/utils/token_storage.dart';
 
-import 'api_client.dart';
-import 'models/login_request.dart';
-import 'models/register_request.dart';
-import 'models/auth_response.dart';
-import 'models/user.dart';
-import '../auth/auth_state.dart';
+import '../api_client.dart';
+import '../models/login_request.dart';
+import '../models/register_request.dart';
+import '../models/auth_response.dart';
+import '../models/user.dart';
+import '../../auth/auth_state.dart';
 
 class AuthService {
   final ApiClient api;

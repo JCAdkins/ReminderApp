@@ -3,8 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mobile_app/widgets/horizontal_divider.dart';
 import 'package:provider/provider.dart' show Provider;
 
-import '../api/google_auth_service.dart';
-import '../api/auth_service.dart';
+import '../api/auth/google_auth_service.dart';
+import '../api/auth/auth_service.dart';
 import '../api/models/login_request.dart';
 import '../api/api_exception.dart';
 import './register_screen.dart';

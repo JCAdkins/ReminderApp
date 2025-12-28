@@ -13,6 +13,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from app.db import Base
 from enum import Enum
 
@@ -55,6 +56,15 @@ class Reminder(Base):
 
     notify_offsets = Column(JSON, default=list)
     # seconds before event
+
+
+    notifications = relationship(
+        "ReminderNotification",
+        back_populates="reminder",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="ReminderNotification.fire_at",
+    )
 
     priority = Column(Integer, default=0)
     status = Column(String(20), default="active")

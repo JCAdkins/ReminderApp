@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../screens/home_screen.dart';
-import '../../api/auth_service.dart';
-import '../../api/fb_auth_service.dart';
+import '../../api/auth/auth_service.dart';
+import '../../api/auth/fb_auth_service.dart';
 
 class FacebookLoginButton extends StatelessWidget {
   const FacebookLoginButton({super.key});

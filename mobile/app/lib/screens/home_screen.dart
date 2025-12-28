@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../api/auth_service.dart';
+import '../api/auth/auth_service.dart';
 import './open_screen.dart';
 import '../widgets/blurred_panel.dart';
 import '../widgets/buttons/neon_button.dart';

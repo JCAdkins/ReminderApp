@@ -4,7 +4,7 @@ import 'dart:io' show Platform;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_app/api/api_exception.dart';
-import 'package:mobile_app/api/auth_service.dart';
+import 'package:mobile_app/api/auth/auth_service.dart';
 import 'package:mobile_app/auth/auth_state.dart';
 
 class GoogleAuthService {

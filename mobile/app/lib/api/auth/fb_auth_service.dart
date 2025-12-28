@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
-import './api_exception.dart';
-import './auth_service.dart';
+import '../api_exception.dart';
+import 'auth_service.dart';
 
 class FbAuthService {
   final AuthService auth;

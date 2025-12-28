@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
+import '../../api/auth/auth_service.dart';
+import '../../api/models/reminder.dart';
+import '../../api/models/reminder_type.dart';
+import '../../api/reminder/reminder_service.dart';
+import '../../auth/auth_state.dart';
 import '../selector_dropdown.dart';
 
 class CreateReminderSheet extends StatefulWidget {
@@ -15,16 +21,7 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
 
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
-  String _selectedType = 'task';
-  final List<String> _types = [
-    'birthday',
-    'anniversary',
-    'task',
-    'bill',
-    'health',
-    'trip',
-    'custom',
-  ];
+  ReminderType _selectedType = ReminderType.task;
 
   @override
   void dispose() {
@@ -35,6 +32,7 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final auth = Provider.of<AuthService>(context, listen: false);
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
@@ -62,24 +60,16 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
                   _buildDateTimeRow(context),
                   const SizedBox(height: 20),
                   TypeSelectorDropdown(
-                    types: [
-                      'birthday',
-                      'anniversary',
-                      'task',
-                      'bill',
-                      'health',
-                      'trip',
-                      'custom'
-                    ],
-                    selectedType: _selectedType,
+                    types: ReminderType.values.map((e) => e.name).toList(),
+                    selectedType: _selectedType.name,
                     onChanged: (value) {
                       setState(() {
-                        _selectedType = value;
+                        _selectedType = ReminderTypeExtension.fromString(value);
                       });
                     },
                   ),
                   const SizedBox(height: 24),
-                  _buildSaveButton(context),
+                  _buildSaveButton(context, auth.authState),
                 ],
               ),
             );
@@ -120,11 +110,11 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
     );
   }
 
-  Widget _buildSaveButton(BuildContext context) {
+  Widget _buildSaveButton(BuildContext context, AuthState authState) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _submit,
+        onPressed: () => _submit(authState),
         child: const Text("Save Reminder"),
       ),
     );
@@ -154,11 +144,45 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
     }
   }
 
-  void _submit() {
-    if (_titleController.text.trim().isEmpty) return;
+  void _submit(AuthState authState) async {
+    final title = _titleController.text.trim();
+    if (title.isEmpty) return;
 
-    // For now just close the sheet
-    Navigator.pop(context);
+    final startDateTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    );
+
+    // Create the Reminder object
+    final reminder = Reminder(
+      title: title,
+      type: _selectedType,
+      startAt: startDateTime,
+      timezone:
+          DateTime.now().timeZoneName, // or allow user to pick a timezone later
+    );
+
+    try {
+      // Call the backend via ReminderService
+      await ReminderService(authState: authState).createReminder(reminder);
+
+      // Optionally show a success snackbar
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Reminder created successfully!')),
+        );
+        Navigator.pop(context); // close the sheet
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create reminder: $e')),
+        );
+      }
+    }
   }
 }
 

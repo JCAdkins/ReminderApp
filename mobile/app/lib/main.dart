@@ -5,7 +5,7 @@ import 'package:timezone/data/latest.dart' as tz;
 
 import 'screens/open_screen.dart';
 import 'auth/auth_state.dart';
-import './api/auth_service.dart';
+import 'api/auth/auth_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
