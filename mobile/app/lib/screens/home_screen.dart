@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 import '../api/auth/auth_service.dart';
+import '../api/models/reminder.dart';
 import '../store/reminder_store.dart';
 import '../widgets/reminder_list_tile.dart';
+import '../widgets/sheets/reminder_details_sheet.dart';
+import '../widgets/sheets/reminder_list_sheet.dart';
 import './open_screen.dart';
 import '../widgets/blurred_panel.dart';
 import '../widgets/buttons/neon_button.dart';
@@ -36,6 +40,30 @@ class _HomeScreenState extends State<HomeScreen> {
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => const CreateReminderSheet(),
+    );
+  }
+
+  void _openReminderDetails(Reminder reminder) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ReminderDetailsSheet(reminder: reminder),
+    );
+  }
+
+  void _openReminderListSheet(List<Reminder> reminders) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ReminderListSheet(
+        reminders: reminders,
+        onReminderTap: (reminder) {
+          Navigator.pop(context); // close list
+          _openReminderDetails(reminder); // open details
+        },
+      ),
     );
   }
 
@@ -159,7 +187,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   itemCount: store.reminders.length,
                                   itemBuilder: (_, i) {
                                     final r = store.reminders[i];
-                                    return ReminderListTile(reminder: r);
+                                    return ReminderListTile(
+                                      reminder: r,
+                                      onTap: () => _openReminderDetails(r),
+                                    );
                                   },
                                 );
                               },
@@ -184,6 +215,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                         _selectedDay = selected;
                                         _focusedDay = focused;
                                       });
+
+                                      final dayReminders = store.reminders
+                                          .where(
+                                            (r) =>
+                                                isSameDay(r.startAt, selected),
+                                          )
+                                          .toList();
+
+                                      if (dayReminders.isNotEmpty) {
+                                        _openReminderListSheet(dayReminders);
+                                      }
                                     },
                                   );
                                 },

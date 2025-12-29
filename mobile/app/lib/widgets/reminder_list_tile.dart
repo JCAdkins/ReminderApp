@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../api/models/reminder.dart';
 import 'icons/type_icons.dart';
+import 'sheets/reminder_details_sheet.dart';
 
 class ReminderListTile extends StatelessWidget {
   final Reminder reminder;
@@ -26,7 +27,15 @@ class ReminderListTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
+          onTap: onTap ??
+              () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => ReminderDetailsSheet(reminder: reminder),
+                );
+              },
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(

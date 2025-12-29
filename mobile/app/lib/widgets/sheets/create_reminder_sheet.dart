@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/api/models/reminder_create.dart';
+import 'package:mobile_app/widgets/sheet_handle.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/auth/auth_service.dart';
-import '../../api/models/reminder.dart';
 import '../../api/models/reminder_type.dart';
 import '../../api/reminder/reminder_service.dart';
 import '../../auth/auth_state.dart';
@@ -55,7 +55,7 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _DragHandle(),
+                  const SheetHandle(),
                   const SizedBox(height: 20),
                   _buildTitleField(),
                   const SizedBox(height: 16),
@@ -190,21 +190,5 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
         );
       }
     }
-  }
-}
-
-class _DragHandle extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 40,
-        height: 4,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade400,
-          borderRadius: BorderRadius.circular(2),
-        ),
-      ),
-    );
   }
 }
