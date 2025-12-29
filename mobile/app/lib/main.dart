@@ -6,6 +6,7 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'screens/open_screen.dart';
 import 'auth/auth_state.dart';
 import 'api/auth/auth_service.dart';
+import 'store/reminder_store.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,7 +16,8 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        // 🔐 Global auth state
+        ChangeNotifierProvider(create: (_) => ReminderStore()),
+        // Global auth state
         ChangeNotifierProvider(
           create: (_) => AuthState(),
         ),

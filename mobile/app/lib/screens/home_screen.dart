@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../api/auth/auth_service.dart';
+import '../store/reminder_store.dart';
+import '../widgets/reminder_list_tile.dart';
 import './open_screen.dart';
 import '../widgets/blurred_panel.dart';
 import '../widgets/buttons/neon_button.dart';
@@ -135,16 +137,32 @@ class _HomeScreenState extends State<HomeScreen> {
                         pages: [
                           BlurredPanel(
                             outerPadding: const EdgeInsets.all(12),
-                            child: Center(
-                              child: Text(
-                                "No reminders yet.\nTap the + button to add one!",
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w300,
-                                ),
-                              ),
+                            child: Consumer<ReminderStore>(
+                              builder: (_, store, __) {
+                                if (store.reminders.isEmpty) {
+                                  return const Center(
+                                    child: Text(
+                                      "No reminders yet.\nTap the + button to add one!",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w300,
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                return ListView.builder(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8),
+                                  itemCount: store.reminders.length,
+                                  itemBuilder: (_, i) {
+                                    final r = store.reminders[i];
+                                    return ReminderListTile(reminder: r);
+                                  },
+                                );
+                              },
                             ),
                           ),
                           Padding(
@@ -155,14 +173,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: Colors.grey[50],
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: ReminderCalendar(
-                                focusedDay: _focusedDay,
-                                selectedDay: _selectedDay,
-                                onDaySelected: (selected, focused) {
-                                  setState(() {
-                                    _selectedDay = selected;
-                                    _focusedDay = focused;
-                                  });
+                              child: Consumer<ReminderStore>(
+                                builder: (_, store, __) {
+                                  return ReminderCalendar(
+                                    reminders: store.reminders,
+                                    focusedDay: _focusedDay,
+                                    selectedDay: _selectedDay,
+                                    onDaySelected: (selected, focused) {
+                                      setState(() {
+                                        _selectedDay = selected;
+                                        _focusedDay = focused;
+                                      });
+                                    },
+                                  );
                                 },
                               ),
                             ),

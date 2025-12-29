@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile_app/api/models/reminder_create.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/auth/auth_service.dart';
@@ -7,6 +8,7 @@ import '../../api/models/reminder.dart';
 import '../../api/models/reminder_type.dart';
 import '../../api/reminder/reminder_service.dart';
 import '../../auth/auth_state.dart';
+import '../../store/reminder_store.dart';
 import '../selector_dropdown.dart';
 
 class CreateReminderSheet extends StatefulWidget {
@@ -157,20 +159,25 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
     );
 
     // Create the Reminder object
-    final reminder = Reminder(
+    final reminder = ReminderCreateRequest(
       title: title,
       type: _selectedType,
       startAt: startDateTime,
+      isAllDay: false,
+      notifyOffsets: [0],
+      priority: 0,
       timezone:
           DateTime.now().timeZoneName, // or allow user to pick a timezone later
     );
 
     try {
       // Call the backend via ReminderService
-      await ReminderService(authState: authState).createReminder(reminder);
+      final fReminder =
+          await ReminderService(authState: authState).createReminder(reminder);
 
       // Optionally show a success snackbar
       if (context.mounted) {
+        context.read<ReminderStore>().addReminder(fReminder);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Reminder created successfully!')),
         );

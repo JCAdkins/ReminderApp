@@ -2,12 +2,21 @@ from datetime import datetime
 from typing import List
 from uuid import UUID
 from pydantic import BaseModel, Field
+from enum import Enum
 
+class ReminderType(str, Enum):
+    birthday = "birthday"
+    anniversary = "anniversary"
+    task = "task"
+    bill = "bill"
+    health = "health"
+    trip = "trip"
+    custom = "custom"
 
 class ReminderBase(BaseModel):
     title: str
     description: str | None = None
-    type: str
+    type: ReminderType | None = None
     start_at: datetime
     end_at: datetime | None = None
     timezone: str
@@ -53,7 +62,8 @@ class ReminderResponse(ReminderBase):
     id: UUID
     status: str
     completed_at: datetime | None
-    notifications: List[ReminderNotificationResponse] = []
+    notifications: List[ReminderNotificationResponse] = Field(default_factory=list)
 
     class Config:
         from_attributes = True
+

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../models/reminder_create.dart';
 import '../api_client.dart';
 import '../models/reminder.dart';
 import '../api_exception.dart';
@@ -13,14 +14,13 @@ class ReminderService {
   // ============================
   // CREATE REMINDER
   // ============================
-  Future<void> createReminder(Reminder reminder) async {
-    print("reminder: ${reminder.toString()}");
+  Future<Reminder> createReminder(ReminderCreateRequest reminder) async {
     try {
       final res = await api.dio.post(
         '/reminders',
         data: reminder.toJson(),
       );
-      print("res: ${res.toString()}");
+      return Reminder.fromJson(res.data);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final data = e.response?.data;
