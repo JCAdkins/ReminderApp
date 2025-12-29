@@ -3,17 +3,16 @@ import 'package:intl/intl.dart';
 
 import '../../api/models/reminder.dart';
 import 'icons/type_icons.dart';
+import 'sheets/edit_reminder_sheet.dart';
 import 'sheets/reminder_details_sheet.dart';
 
 class ReminderListTile extends StatelessWidget {
   final Reminder reminder;
   final VoidCallback? onTap;
+  final VoidCallback? onEdit; // new callback
 
-  const ReminderListTile({
-    super.key,
-    required this.reminder,
-    this.onTap,
-  });
+  const ReminderListTile(
+      {super.key, required this.reminder, this.onTap, this.onEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +34,14 @@ class ReminderListTile extends StatelessWidget {
                   backgroundColor: Colors.transparent,
                   builder: (_) => ReminderDetailsSheet(reminder: reminder),
                 );
+              },
+          onLongPress: onEdit ??
+              () {
+                showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => EditReminderSheet(reminder: reminder));
               },
           child: Padding(
             padding: const EdgeInsets.all(14),

@@ -51,5 +51,14 @@ class ReminderService {
     }
   }
 
+  // ============================
+  // UPDATE REMINDERS
+  // ============================
+  Future<Reminder> updateReminder(
+      String id, ReminderCreateRequest reminder) async {
+    final res = await api.dio.put('/reminders/$id', data: reminder.toJson());
+    return Reminder.fromJson(res.data);
+  }
+
   // TODO: updateReminder, deleteReminder, etc.
 }

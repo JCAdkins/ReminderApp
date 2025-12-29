@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-
 import '../api/models/reminder.dart';
 
 class ReminderCalendar extends StatelessWidget {
@@ -17,16 +16,16 @@ class ReminderCalendar extends StatelessWidget {
     required this.onDaySelected,
   });
 
-  // reactive event lookup
   List<Reminder> _eventsForDay(DateTime day) {
     return reminders.where((r) {
-      return isSameDay(r.startAt, day);
+      final d = r.startAt.toLocal();
+      return d.year == day.year && d.month == day.month && d.day == day.day;
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return TableCalendar<Reminder>(
+    return TableCalendar(
       firstDay: DateTime.utc(2020, 1, 1),
       lastDay: DateTime.utc(2030, 12, 31),
       focusedDay: focusedDay,
@@ -34,22 +33,16 @@ class ReminderCalendar extends StatelessWidget {
       onDaySelected: onDaySelected,
       eventLoader: _eventsForDay,
       calendarStyle: CalendarStyle(
-        todayDecoration: BoxDecoration(
+        todayDecoration: const BoxDecoration(
           color: Colors.blueAccent,
           shape: BoxShape.circle,
         ),
-        selectedDecoration: BoxDecoration(
+        selectedDecoration: const BoxDecoration(
           color: Colors.purpleAccent,
           shape: BoxShape.circle,
         ),
         defaultTextStyle: const TextStyle(color: Colors.black87),
         weekendTextStyle: const TextStyle(color: Colors.black54),
-
-        // dot indicator styling
-        markerDecoration: const BoxDecoration(
-          color: Colors.redAccent,
-          shape: BoxShape.circle,
-        ),
       ),
       headerStyle: const HeaderStyle(
         formatButtonVisible: false,

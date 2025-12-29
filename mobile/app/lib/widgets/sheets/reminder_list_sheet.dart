@@ -7,11 +7,13 @@ import '../sheet_handle.dart';
 class ReminderListSheet extends StatelessWidget {
   final List<Reminder> reminders;
   final void Function(Reminder reminder) onReminderTap;
+  final void Function(Reminder reminder)? onReminderEdit;
 
   const ReminderListSheet({
     super.key,
     required this.reminders,
     required this.onReminderTap,
+    this.onReminderEdit,
   });
 
   @override
@@ -38,6 +40,7 @@ class ReminderListSheet extends StatelessWidget {
                     return ReminderListTile(
                       reminder: reminder,
                       onTap: () => onReminderTap(reminder),
+                      onEdit: () => onReminderEdit?.call(reminder),
                     );
                   },
                 ),

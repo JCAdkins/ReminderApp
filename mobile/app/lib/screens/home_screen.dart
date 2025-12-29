@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:table_calendar/table_calendar.dart';
 
 import '../api/auth/auth_service.dart';
 import '../api/models/reminder.dart';
 import '../store/reminder_store.dart';
 import '../widgets/reminder_list_tile.dart';
+import '../widgets/sheets/edit_reminder_sheet.dart';
 import '../widgets/sheets/reminder_details_sheet.dart';
 import '../widgets/sheets/reminder_list_sheet.dart';
 import './open_screen.dart';
@@ -43,6 +43,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _openEditReminderSheet(Reminder reminder) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => EditReminderSheet(reminder: reminder),
+    );
+  }
+
   void _openReminderDetails(Reminder reminder) {
     showModalBottomSheet(
       context: context,
@@ -63,6 +72,10 @@ class _HomeScreenState extends State<HomeScreen> {
           Navigator.pop(context); // close list
           _openReminderDetails(reminder); // open details
         },
+        onReminderEdit: (reminder) {
+          Navigator.pop(context); // close list
+          _openEditReminderSheet(reminder); // open edit sheet
+        },
       ),
     );
   }
@@ -72,9 +85,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final auth = Provider.of<AuthService>(context, listen: false);
 
     return GestureDetector(
-      behavior:
-          HitTestBehavior.opaque, // ensures taps on empty space are detected
-      onTap: () => FocusScope.of(context).unfocus(), // dismiss keyboard
+      behavior: HitTestBehavior.opaque,
+      onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         extendBodyBehindAppBar: true,
         appBar: AppBar(
@@ -115,7 +127,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-
             // Foreground content
             Center(
               child: Padding(
@@ -147,8 +158,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
-
-                    // Create Reminder Button
                     Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: NeonButton(
@@ -158,8 +167,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-
-                    // Swipeable panel
                     Expanded(
                       child: SwipeablePanel(
                         pages: [
@@ -180,7 +187,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   );
                                 }
-
                                 return ListView.builder(
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 8),
@@ -190,6 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     return ReminderListTile(
                                       reminder: r,
                                       onTap: () => _openReminderDetails(r),
+                                      onEdit: () => _openEditReminderSheet(r),
                                     );
                                   },
                                 );
@@ -243,5 +250,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  bool isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 }
