@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:mobile_app/api/models/reminder_create.dart';
 import 'package:mobile_app/widgets/sheet_handle.dart';
+import 'package:mobile_app/widgets/sheets/reminder_form.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/auth/auth_service.dart';
 import '../../api/models/reminder_type.dart';
 import '../../api/reminder/reminder_service.dart';
-import '../../auth/auth_state.dart';
 import '../../store/reminder_store.dart';
-import '../selector_dropdown.dart';
 
 class CreateReminderSheet extends StatefulWidget {
   const CreateReminderSheet({super.key});
@@ -21,9 +19,9 @@ class CreateReminderSheet extends StatefulWidget {
 class _CreateReminderSheetState extends State<CreateReminderSheet> {
   final _titleController = TextEditingController();
 
-  DateTime _selectedDate = DateTime.now();
-  TimeOfDay _selectedTime = TimeOfDay.now();
-  ReminderType _selectedType = ReminderType.task;
+  final DateTime _selectedDate = DateTime.now();
+  final TimeOfDay _selectedTime = TimeOfDay.now();
+  final ReminderType _selectedType = ReminderType.task;
 
   @override
   void dispose() {
@@ -57,21 +55,35 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
                 children: [
                   const SheetHandle(),
                   const SizedBox(height: 20),
-                  _buildTitleField(),
-                  const SizedBox(height: 16),
-                  _buildDateTimeRow(context),
-                  const SizedBox(height: 20),
-                  TypeSelectorDropdown(
-                    types: ReminderType.values.map((e) => e.name).toList(),
-                    selectedType: _selectedType.name,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedType = ReminderTypeExtension.fromString(value);
-                      });
+                  ReminderForm(
+                    initialTitle: '',
+                    initialDescription: null,
+                    initialDate: _selectedDate,
+                    initialTime: _selectedTime,
+                    initialType: _selectedType,
+                    submitLabel: 'Save Reminder',
+                    onSubmit: (data) async {
+                      final request = ReminderCreateRequest(
+                        title: data.title,
+                        description: data.description,
+                        type: data.type,
+                        startAt: data.startDateTime,
+                        isAllDay: false,
+                        notifyOffsets: [0],
+                        priority: 0,
+                        timezone: DateTime.now().timeZoneName,
+                      );
+
+                      final created = await ReminderService(
+                        authState: auth.authState,
+                      ).createReminder(request);
+
+                      if (!context.mounted) return;
+
+                      context.read<ReminderStore>().addReminder(created);
+                      Navigator.pop(context);
                     },
                   ),
-                  const SizedBox(height: 24),
-                  _buildSaveButton(context, auth.authState),
                 ],
               ),
             );
@@ -79,116 +91,5 @@ class _CreateReminderSheetState extends State<CreateReminderSheet> {
         ),
       ),
     );
-  }
-
-  Widget _buildTitleField() {
-    return TextField(
-      controller: _titleController,
-      autofocus: true,
-      decoration: const InputDecoration(
-        labelText: "Title",
-        border: OutlineInputBorder(),
-      ),
-    );
-  }
-
-  Widget _buildDateTimeRow(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton(
-            onPressed: _pickDate,
-            child: Text(DateFormat.yMMMd().format(_selectedDate)),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: OutlinedButton(
-            onPressed: _pickTime,
-            child: Text(_selectedTime.format(context)),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSaveButton(BuildContext context, AuthState authState) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: () => _submit(authState),
-        child: const Text("Save Reminder"),
-      ),
-    );
-  }
-
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-    );
-
-    if (picked != null) {
-      setState(() => _selectedDate = picked);
-    }
-  }
-
-  Future<void> _pickTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime,
-    );
-
-    if (picked != null) {
-      setState(() => _selectedTime = picked);
-    }
-  }
-
-  void _submit(AuthState authState) async {
-    final title = _titleController.text.trim();
-    if (title.isEmpty) return;
-
-    final startDateTime = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-      _selectedTime.hour,
-      _selectedTime.minute,
-    );
-
-    // Create the Reminder object
-    final reminder = ReminderCreateRequest(
-      title: title,
-      type: _selectedType,
-      startAt: startDateTime,
-      isAllDay: false,
-      notifyOffsets: [0],
-      priority: 0,
-      timezone:
-          DateTime.now().timeZoneName, // or allow user to pick a timezone later
-    );
-
-    try {
-      // Call the backend via ReminderService
-      final fReminder =
-          await ReminderService(authState: authState).createReminder(reminder);
-
-      // Optionally show a success snackbar
-      if (context.mounted) {
-        context.read<ReminderStore>().addReminder(fReminder);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Reminder created successfully!')),
-        );
-        Navigator.pop(context); // close the sheet
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create reminder: $e')),
-        );
-      }
-    }
   }
 }

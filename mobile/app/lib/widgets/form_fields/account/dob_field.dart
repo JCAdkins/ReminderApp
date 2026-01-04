@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../dob_picker.dart';
+import '../../dob_picker.dart';
 
 class DOBField extends StatelessWidget {
   final TextEditingController controller;

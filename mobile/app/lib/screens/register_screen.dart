@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../widgets/form_fields/name_field.dart';
-import '../widgets/form_fields/email_field.dart';
-import '../widgets/form_fields/password_field.dart';
-import '../widgets/form_fields/dob_field.dart';
+import '../widgets/form_fields/account/name_field.dart';
+import '../widgets/form_fields/account/email_field.dart';
+import '../widgets/form_fields/account/password_field.dart';
+import '../widgets/form_fields/account/dob_field.dart';
 import '../widgets/error_snackbar.dart';
 import '../widgets/horizontal_divider.dart';
 import '../api/auth/auth_service.dart';
