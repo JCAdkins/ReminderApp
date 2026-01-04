@@ -192,7 +192,7 @@ class _EditReminderSheetState extends State<EditReminderSheet> {
     );
 
     try {
-      final updated = await ReminderService(authState: auth.authState!)
+      final updated = await ReminderService(authState: auth.authState)
           .updateReminder(widget.reminder.id!, updateRequest);
 
       if (!mounted) return;

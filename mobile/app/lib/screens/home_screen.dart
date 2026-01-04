@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app/api/reminder/reminder_service.dart';
 import 'package:provider/provider.dart';
 
 import '../api/auth/auth_service.dart';
@@ -26,11 +27,37 @@ class _HomeScreenState extends State<HomeScreen> {
   final PageController _pageController = PageController(viewportFraction: 1.1);
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReminders();
+  }
 
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadReminders() async {
+    // Delay ensures context is fully available
+    await Future.delayed(Duration.zero);
+
+    if (!mounted || _loaded) return;
+    _loaded = true;
+
+    final reminderStore = Provider.of<ReminderStore>(context, listen: false);
+    final reminderService =
+        Provider.of<ReminderService>(context, listen: false);
+
+    try {
+      final reminders = await reminderService.fetchReminders();
+      reminderStore.setReminders(reminders);
+    } catch (e) {
+      debugPrint('Failed to load reminders: $e');
+    }
   }
 
   void _openCreateReminderSheet() {

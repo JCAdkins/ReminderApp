@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mobile_app/api/reminder/reminder_service.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
@@ -28,6 +29,8 @@ Future<void> main() async {
             authState: authState,
           ),
         ),
+        ProxyProvider<AuthState, ReminderService>(
+            update: (_, authState, __) => ReminderService(authState: authState))
       ],
       child: const MyApp(),
     ),
