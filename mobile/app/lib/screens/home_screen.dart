@@ -217,9 +217,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 return ListView.builder(
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 8),
-                                  itemCount: store.reminders.length,
+                                  itemCount:
+                                      store.getUpcomingReminders().length,
                                   itemBuilder: (_, i) {
-                                    final r = store.reminders[i];
+                                    final r = store.getUpcomingReminders()[i];
                                     return ReminderListTile(
                                       reminder: r,
                                       onTap: () => _openReminderDetails(r),

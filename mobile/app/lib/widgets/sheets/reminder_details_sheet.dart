@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app/api/reminder/reminder_service.dart';
+import 'package:mobile_app/store/reminder_store.dart';
+import 'package:mobile_app/widgets/sheets/edit_reminder_sheet.dart';
+import 'package:provider/provider.dart';
 
 import '../../api/models/reminder.dart';
 import '../sheet_handle.dart';
@@ -10,6 +14,80 @@ class ReminderDetailsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    void openEditReminderSheet(Reminder reminder) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => EditReminderSheet(reminder: reminder),
+      );
+    }
+
+    Future<void> openDeleteReminderConfirmation(
+      Reminder reminder,
+    ) async {
+      final reminderService =
+          Provider.of<ReminderService>(context, listen: false);
+      final store = context.read<ReminderStore>();
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Delete Reminder'),
+            content: const Text(
+              'Are you sure you want to delete this reminder?\n\nThis action cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  foregroundColor: Theme.of(context).colorScheme.onError,
+                ),
+                onPressed: () => {
+                  Navigator.pop(context, true),
+                  // Navigator.pop(context, false)
+                },
+                child: const Text('Delete'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirmed != true || !context.mounted) return;
+      try {
+        await reminderService.deleteReminder(reminder.id!);
+
+        store.removeReminder(reminder.id!);
+
+        if (!context.mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Reminder deleted'), backgroundColor: Colors.green),
+        );
+
+        Navigator.pop(context); // close sheet
+      } catch (e) {
+        if (!context.mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to delete reminder',
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
       maxChildSize: 0.9,
@@ -66,10 +144,25 @@ class ReminderDetailsSheet extends StatelessWidget {
 
                 // Future: Edit / Delete
                 ElevatedButton(
-                  onPressed: () {
-                    // TODO: edit flow
-                  },
+                  onPressed: () => openEditReminderSheet(reminder),
                   child: const Text("Edit Reminder"),
+                ),
+                const SizedBox(height: 16),
+
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                    foregroundColor: Theme.of(context).colorScheme.onError,
+                  ),
+                  onPressed: () => openDeleteReminderConfirmation(reminder),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.delete),
+                      SizedBox(width: 8),
+                      Text("Delete Reminder"),
+                    ],
+                  ),
                 ),
               ],
             ))

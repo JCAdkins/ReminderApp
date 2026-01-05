@@ -92,8 +92,7 @@ class _EditReminderSheetState extends State<EditReminderSheet> {
                         if (!context.mounted) return;
 
                         final store = context.read<ReminderStore>();
-                        store.removeReminder(widget.reminder.id!);
-                        store.addReminder(updated);
+                        store.replaceReminder(updated);
 
                         Navigator.pop(context);
                       },

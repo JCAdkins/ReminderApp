@@ -55,10 +55,32 @@ class ReminderService {
   // UPDATE REMINDERS
   // ============================
   Future<Reminder> updateReminder(
-      String id, ReminderCreateRequest reminder) async {
-    final res = await api.dio.put('/reminders/$id', data: reminder.toJson());
-    return Reminder.fromJson(res.data);
+    String id,
+    ReminderCreateRequest request,
+  ) async {
+    try {
+      final res = await api.dio.put(
+        '/reminders/$id',
+        data: request.toJson(),
+      );
+
+      return Reminder.fromJson(res.data);
+    } on DioException catch (e) {
+      throw ApiException(
+          e.response?.data?['detail'] ?? 'Failed to update reminder');
+    } catch (_) {
+      throw ApiException('Unexpected error updating reminder');
+    }
   }
 
-  // TODO: updateReminder, deleteReminder, etc.
+  Future<void> deleteReminder(String id) async {
+    try {
+      await api.dio.delete('/reminders/$id');
+    } on DioException catch (e) {
+      throw ApiException(
+          e.response?.data?['detail'] ?? 'Failed to delete reminder');
+    } catch (_) {
+      throw ApiException('Unexpected error deleting reminder');
+    }
+  }
 }

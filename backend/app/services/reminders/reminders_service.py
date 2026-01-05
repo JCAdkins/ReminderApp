@@ -32,7 +32,7 @@ def create_reminder_service(db: Session, *, user_id, data: ReminderCreate) -> Re
 def get_user_reminders_service(db: Session, *, user_id):
     return (
         db.query(Reminder)
-        .filter(Reminder.user_id == user_id)
+        .filter(Reminder.user_id == user_id, Reminder.status != "cancelled")
         .order_by(Reminder.start_at.asc())
         .all()
     )
