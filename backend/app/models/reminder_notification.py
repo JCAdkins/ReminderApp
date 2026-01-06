@@ -6,6 +6,7 @@ from sqlalchemy import (
     Integer,
     ForeignKey,
     Index,
+    String,
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID
@@ -55,6 +56,30 @@ class ReminderNotification(Base):
         nullable=False,
     )
 
+    processing_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+    )
+
+    delivery_status = Column(
+        String,
+        nullable=False,
+        default="pending",  # pending | sent | failed
+        index=True,
+    )
+
+    attempt_count = Column(
+        Integer,
+        nullable=False,
+        default=0,
+    )
+
+    error_message = Column(
+        String,
+        nullable=True,
+    )
+
     reminder = relationship(
         "Reminder",
         back_populates="notifications",
@@ -72,9 +97,13 @@ class ReminderNotification(Base):
         Index(
             "ix_reminder_notifications_due",
             "fire_at",
-            "sent_at",
-        ),
+            postgresql_where=sent_at.is_(None),
+        )
     )
+
+    def validate_fire_at(self):
+        if self.fire_at.tzinfo is None:
+            raise ValueError("fire_at must be timezone-aware (UTC)")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -86,4 +115,7 @@ class ReminderNotification(Base):
             f"fire_at={self.fire_at} "
             f"offset={self.offset_seconds} "
             f"sent_at={self.sent_at}>"
+            f"delivery_status={self.delivery_status}>"
+            f"error_message={self.error_message}>"
+            f"processing_at={self.processing_at}>"
         )
