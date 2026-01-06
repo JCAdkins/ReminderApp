@@ -33,7 +33,10 @@ class ReminderStore extends ChangeNotifier {
   }
 
   List<Reminder> getUpcomingReminders() {
-    return _reminders.where((r) => _isUpcoming(r)).toList();
+    List<Reminder> upcomingReminders =
+        _reminders.where((r) => _isUpcoming(r)).toList();
+    upcomingReminders.sort((r1, r2) => r1.startAt.compareTo(r2.startAt));
+    return upcomingReminders;
   }
 
   List<Reminder> remindersForDay(DateTime day) {
@@ -45,7 +48,6 @@ class ReminderStore extends ChangeNotifier {
 
   bool _isUpcoming(Reminder r) {
     final now = DateTime.now();
-    print("reminder: $r");
     return r.status == 'active' && r.startAt.isAfter(now);
   }
 }
