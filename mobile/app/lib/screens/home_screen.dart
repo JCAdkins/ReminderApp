@@ -253,8 +253,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
                                       final dayReminders = store.reminders
                                           .where(
-                                            (r) =>
-                                                isSameDay(r.startAt, selected),
+                                            (r) => isSameDay(
+                                                r.startAt.toLocal(), selected),
                                           )
                                           .toList();
 

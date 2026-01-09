@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
 import 'package:mobile_app/api/reminder/reminder_service.dart';
 import 'package:mobile_app/store/reminder_store.dart';
 import 'package:mobile_app/widgets/sheets/edit_reminder_sheet.dart';
@@ -125,7 +127,12 @@ class ReminderDetailsSheet extends StatelessWidget {
                 _InfoRow(
                   icon: Icons.schedule,
                   label: "Time",
-                  value: reminder.startAt.toLocal().toString(),
+                  // value: TimeOfDay(
+                  //   hour: reminder.startAt.toLocal().hour,
+                  //   minute: reminder.startAt.minute,
+                  // ).toString(),
+                  value: DateFormat('MM-dd-yyyy hh:mm a')
+                      .format(reminder.startAt.toLocal()),
                 ),
 
                 _InfoRow(

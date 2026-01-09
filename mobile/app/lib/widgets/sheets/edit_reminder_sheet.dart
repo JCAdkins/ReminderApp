@@ -66,9 +66,9 @@ class _EditReminderSheetState extends State<EditReminderSheet> {
                     ReminderForm(
                       initialTitle: widget.reminder.title,
                       initialDescription: widget.reminder.description,
-                      initialDate: widget.reminder.startAt,
+                      initialDate: widget.reminder.startAt.toLocal(),
                       initialTime: TimeOfDay(
-                        hour: widget.reminder.startAt.hour,
+                        hour: widget.reminder.startAt.toLocal().hour,
                         minute: widget.reminder.startAt.minute,
                       ),
                       initialType: widget.reminder.type,
