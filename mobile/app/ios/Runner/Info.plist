@@ -49,6 +49,8 @@
 	<string>28e47fc77c6aa95918692e4fa77e55b7</string>
 	<key>FacebookDisplayName</key>
 	<string>iRemind</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>We use notifications to remind you about important events.</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>This identifier will be used to deliver personalized ads to you.</string>
 	<key>CFBundleVersion</key>

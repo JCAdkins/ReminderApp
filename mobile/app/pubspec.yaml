@@ -22,6 +22,9 @@ dependencies:
   # Google Sign-in
   google_sign_in: ^6.2.1
 
+  # Simulate iOS notifications
+  flutter_local_notifications: ^17.0.0
+
   # Effects
   smooth_page_indicator: ^2.0.0
 
@@ -33,6 +36,12 @@ dependencies:
 
   # JWT decode
   jwt_decoder: ^2.0.1
+
+  # Firebase core
+  firebase_core: ^4.3.0
+
+  # Firebase messaging
+  firebase_messaging: ^16.1.0
 
   # Secure token storage
   flutter_secure_storage: ^9.2.1

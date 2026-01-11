@@ -1,5 +1,8 @@
+// import 'package:firebase_core/firebase_core.dart';
+// import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mobile_app/api/notification/notification_service.dart';
 import 'package:mobile_app/api/reminder/reminder_service.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -13,6 +16,13 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(); // loads .env for mobile & web
   tz.initializeTimeZones();
+
+  await NotificationService.instance.init();
+  // await Firebase.initializeApp();
+
+  // FirebaseMessaging messaging = FirebaseMessaging.instance;
+  // NotificationSettings settings =
+  //     await messaging.requestPermission(provisional: true);
 
   runApp(
     MultiProvider(
